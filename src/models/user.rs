@@ -1,11 +1,11 @@
-use diesel::{AsChangeset, Insertable, Queryable, Selectable};
+use diesel::{AsChangeset, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Queryable, Insertable, AsChangeset)]
 #[diesel(table_name = crate::models::schema::users)]
 pub struct User {
     #[serde(default)]
-    pub uuid: String,
+    pub uuid_id: String,
     pub email: String,
     pub username: String,
     pub phone: Option<String>,

@@ -3,7 +3,7 @@
 diesel::table! {
     fantasy_contest (id) {
         id -> Int4,
-        uuid -> Varchar,
+        uuid_id -> Varchar,
         user_id -> Int4,
         player_ids -> Text,
         week_of_year -> Int4,
@@ -33,7 +33,7 @@ diesel::table! {
 diesel::table! {
     users (id) {
         id -> Int4,
-        uuid -> Varchar,
+        uuid_id -> Varchar,
         email -> Varchar,
         phone -> Nullable<Varchar>,
         username -> Varchar,

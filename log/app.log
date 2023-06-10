@@ -182,3 +182,249 @@
 2023-06-06 23:55:33 - INFO: 127.0.0.1 "POST /api/v2/auth/login HTTP/1.1" 200 211 "-" "PostmanRuntime/7.28.4" 0.454696
 2023-06-06 23:55:37 - ERROR: An error occurred in the login_user_service function. The error: IncorrectPassword
 2023-06-06 23:55:37 - INFO: 127.0.0.1 "POST /api/v2/auth/login HTTP/1.1" 400 66 "-" "PostmanRuntime/7.28.4" 0.437735
+2023-06-07 09:07:07 - INFO: SIGINT received; starting forced shutdown
+2023-06-07 09:07:07 - INFO: accept thread stopped
+2023-06-07 09:07:07 - INFO: shutting down idle worker
+2023-06-07 09:07:07 - INFO: shutting down idle worker
+2023-06-07 09:07:07 - INFO: shutting down idle worker
+2023-06-07 09:07:07 - INFO: shutting down idle worker
+2023-06-07 09:07:07 - INFO: shutting down idle worker
+2023-06-07 09:07:07 - INFO: shutting down idle worker
+2023-06-07 09:07:07 - INFO: shutting down idle worker
+2023-06-07 09:07:07 - INFO: shutting down idle worker
+2023-06-07 09:07:07 - INFO: shutting down idle worker
+2023-06-07 09:07:07 - INFO: shutting down idle worker
+2023-06-07 09:07:18 - INFO: starting 10 workers
+2023-06-07 09:07:18 - INFO: Actix runtime found; starting in Actix runtime
+2023-06-07 09:07:31 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.201068
+2023-06-07 09:07:36 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 200 308 "-" "PostmanRuntime/7.28.4" 0.548779
+2023-06-07 09:09:19 - INFO: SIGINT received; starting forced shutdown
+2023-06-07 09:09:19 - INFO: accept thread stopped
+2023-06-07 09:09:19 - INFO: shutting down idle worker
+2023-06-07 09:09:19 - INFO: shutting down idle worker
+2023-06-07 09:09:19 - INFO: shutting down idle worker
+2023-06-07 09:09:19 - INFO: shutting down idle worker
+2023-06-07 09:09:19 - INFO: shutting down idle worker
+2023-06-07 09:09:19 - INFO: shutting down idle worker
+2023-06-07 09:09:19 - INFO: shutting down idle worker
+2023-06-07 09:09:19 - INFO: shutting down idle worker
+2023-06-07 09:09:19 - INFO: shutting down idle worker
+2023-06-07 09:09:19 - INFO: shutting down idle worker
+2023-06-07 09:09:26 - INFO: starting 10 workers
+2023-06-07 09:09:26 - INFO: Actix runtime found; starting in Actix runtime
+2023-06-07 09:09:34 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.213443
+2023-06-07 09:09:43 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.018049
+2023-06-07 09:09:46 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.008982
+2023-06-07 09:09:50 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 200 309 "-" "PostmanRuntime/7.28.4" 0.529364
+2023-06-07 09:34:54 - INFO: SIGINT received; starting forced shutdown
+2023-06-07 09:34:54 - INFO: accept thread stopped
+2023-06-07 09:34:54 - INFO: shutting down idle worker
+2023-06-07 09:34:54 - INFO: shutting down idle worker
+2023-06-07 09:34:54 - INFO: shutting down idle worker
+2023-06-07 09:34:54 - INFO: shutting down idle worker
+2023-06-07 09:34:54 - INFO: shutting down idle worker
+2023-06-07 09:34:54 - INFO: shutting down idle worker
+2023-06-07 09:34:54 - INFO: shutting down idle worker
+2023-06-07 09:34:54 - INFO: shutting down idle worker
+2023-06-07 09:34:54 - INFO: shutting down idle worker
+2023-06-07 09:34:54 - INFO: shutting down idle worker
+2023-06-07 09:35:01 - INFO: starting 10 workers
+2023-06-07 09:35:01 - INFO: Actix runtime found; starting in Actix runtime
+2023-06-07 09:35:07 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.225061
+2023-06-07 09:35:12 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.006926
+2023-06-07 09:35:15 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.014471
+2023-06-07 09:35:21 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 200 310 "-" "PostmanRuntime/7.28.4" 0.519375
+2023-06-07 09:45:28 - INFO: SIGINT received; starting forced shutdown
+2023-06-07 09:45:28 - INFO: shutting down idle worker
+2023-06-07 09:45:28 - INFO: shutting down idle worker
+2023-06-07 09:45:28 - INFO: shutting down idle worker
+2023-06-07 09:45:28 - INFO: shutting down idle worker
+2023-06-07 09:45:28 - INFO: shutting down idle worker
+2023-06-07 09:45:28 - INFO: shutting down idle worker
+2023-06-07 09:45:28 - INFO: shutting down idle worker
+2023-06-07 09:45:28 - INFO: shutting down idle worker
+2023-06-07 09:45:28 - INFO: shutting down idle worker
+2023-06-07 09:45:28 - INFO: accept thread stopped
+2023-06-07 09:45:28 - INFO: shutting down idle worker
+2023-06-07 09:45:36 - INFO: starting 10 workers
+2023-06-07 09:45:36 - INFO: Actix runtime found; starting in Actix runtime
+2023-06-07 09:45:42 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.183265
+2023-06-07 09:45:46 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.009854
+2023-06-07 09:45:50 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.014336
+2023-06-07 09:45:53 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 200 311 "-" "PostmanRuntime/7.28.4" 0.538330
+2023-06-07 10:12:08 - INFO: SIGINT received; starting forced shutdown
+2023-06-07 10:12:08 - INFO: shutting down idle worker
+2023-06-07 10:12:08 - INFO: shutting down idle worker
+2023-06-07 10:12:08 - INFO: shutting down idle worker
+2023-06-07 10:12:08 - INFO: shutting down idle worker
+2023-06-07 10:12:08 - INFO: shutting down idle worker
+2023-06-07 10:12:08 - INFO: shutting down idle worker
+2023-06-07 10:12:08 - INFO: accept thread stopped
+2023-06-07 10:12:08 - INFO: shutting down idle worker
+2023-06-07 10:12:08 - INFO: shutting down idle worker
+2023-06-07 10:12:08 - INFO: shutting down idle worker
+2023-06-07 10:12:08 - INFO: shutting down idle worker
+2023-06-07 10:12:16 - INFO: starting 10 workers
+2023-06-07 10:12:16 - INFO: Actix runtime found; starting in Actix runtime
+2023-06-07 10:12:23 - ERROR: An error occurred in the login_user_service function. The error: IncorrectPassword
+2023-06-07 10:12:23 - INFO: 127.0.0.1 "POST /api/v2/auth/login HTTP/1.1" 400 68 "-" "PostmanRuntime/7.28.4" 0.680933
+2023-06-07 10:15:25 - INFO: SIGINT received; starting forced shutdown
+2023-06-07 10:15:25 - INFO: shutting down idle worker
+2023-06-07 10:15:25 - INFO: accept thread stopped
+2023-06-07 10:15:25 - INFO: shutting down idle worker
+2023-06-07 10:15:25 - INFO: shutting down idle worker
+2023-06-07 10:15:25 - INFO: shutting down idle worker
+2023-06-07 10:15:25 - INFO: shutting down idle worker
+2023-06-07 10:15:25 - INFO: shutting down idle worker
+2023-06-07 10:15:25 - INFO: shutting down idle worker
+2023-06-07 10:15:25 - INFO: shutting down idle worker
+2023-06-07 10:15:25 - INFO: shutting down idle worker
+2023-06-07 10:15:25 - INFO: shutting down idle worker
+2023-06-07 10:15:33 - INFO: starting 10 workers
+2023-06-07 10:15:33 - INFO: Actix runtime found; starting in Actix runtime
+2023-06-07 10:15:35 - ERROR: An error occurred in the login_user_service function. The error: IncorrectPassword
+2023-06-07 10:15:35 - INFO: 127.0.0.1 "POST /api/v2/auth/login HTTP/1.1" 400 68 "-" "PostmanRuntime/7.28.4" 0.734285
+2023-06-07 10:23:28 - INFO: SIGINT received; starting forced shutdown
+2023-06-07 10:23:28 - INFO: accept thread stopped
+2023-06-07 10:23:28 - INFO: shutting down idle worker
+2023-06-07 10:23:28 - INFO: shutting down idle worker
+2023-06-07 10:23:28 - INFO: shutting down idle worker
+2023-06-07 10:23:28 - INFO: shutting down idle worker
+2023-06-07 10:23:28 - INFO: shutting down idle worker
+2023-06-07 10:23:28 - INFO: shutting down idle worker
+2023-06-07 10:23:28 - INFO: shutting down idle worker
+2023-06-07 10:23:28 - INFO: shutting down idle worker
+2023-06-07 10:23:28 - INFO: shutting down idle worker
+2023-06-07 10:23:28 - INFO: shutting down idle worker
+2023-06-08 19:09:07 - INFO: starting 10 workers
+2023-06-08 19:09:07 - INFO: Actix runtime found; starting in Actix runtime
+2023-06-08 19:09:57 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 71 "-" "PostmanRuntime/7.28.4" 0.003835
+2023-06-08 19:14:43 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 43 "-" "PostmanRuntime/7.28.4" 0.002317
+2023-06-08 19:15:27 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 200 305 "-" "PostmanRuntime/7.28.4" 0.603055
+2023-06-08 19:15:33 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.024958
+2023-06-08 19:16:05 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.020506
+2023-06-08 19:16:14 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.010520
+2023-06-08 19:16:23 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.005204
+2023-06-08 19:16:28 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 200 308 "-" "PostmanRuntime/7.28.4" 0.446257
+2023-06-08 19:21:50 - INFO: 127.0.0.1 "POST /api/v2/auth/login HTTP/1.1" 200 209 "-" "PostmanRuntime/7.28.4" 0.469068
+2023-06-08 19:22:12 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.007058
+2023-06-08 19:22:23 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.007830
+2023-06-08 19:25:00 - INFO: SIGINT received; starting forced shutdown
+2023-06-08 19:25:00 - INFO: shutting down idle worker
+2023-06-08 19:25:00 - INFO: shutting down idle worker
+2023-06-08 19:25:00 - INFO: shutting down idle worker
+2023-06-08 19:25:00 - INFO: shutting down idle worker
+2023-06-08 19:25:00 - INFO: shutting down idle worker
+2023-06-08 19:25:00 - INFO: shutting down idle worker
+2023-06-08 19:25:00 - INFO: shutting down idle worker
+2023-06-08 19:25:00 - INFO: accept thread stopped
+2023-06-08 19:25:00 - INFO: shutting down idle worker
+2023-06-08 19:25:00 - INFO: shutting down idle worker
+2023-06-08 19:25:00 - INFO: shutting down idle worker
+2023-06-08 19:25:08 - INFO: starting 10 workers
+2023-06-08 19:25:08 - INFO: Actix runtime found; starting in Actix runtime
+2023-06-08 19:25:16 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.210972
+2023-06-08 19:25:31 - INFO: 127.0.0.1 "POST /api/v2/auth/login HTTP/1.1" 200 209 "-" "PostmanRuntime/7.28.4" 0.452694
+2023-06-08 19:25:48 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.020483
+2023-06-08 19:26:26 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.034852
+2023-06-08 19:26:35 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.012182
+2023-06-08 19:26:42 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.049578
+2023-06-08 19:26:43 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.017206
+2023-06-08 19:26:44 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.012950
+2023-06-08 19:26:45 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.013288
+2023-06-08 19:26:45 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.017603
+2023-06-08 19:26:46 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.011419
+2023-06-08 19:26:46 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.016570
+2023-06-08 19:26:47 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.009211
+2023-06-08 19:26:47 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.017436
+2023-06-08 19:26:48 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.016436
+2023-06-08 19:26:48 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.010889
+2023-06-08 19:26:49 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.011391
+2023-06-08 19:26:49 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.011437
+2023-06-08 19:26:50 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.034368
+2023-06-08 19:26:50 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.017962
+2023-06-08 19:26:51 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.022413
+2023-06-08 19:26:51 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.016310
+2023-06-08 19:26:52 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.023587
+2023-06-08 19:26:53 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.014579
+2023-06-08 19:26:53 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.009084
+2023-06-08 19:26:54 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.012691
+2023-06-08 19:26:54 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.018657
+2023-06-08 19:26:55 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.014108
+2023-06-08 19:26:55 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.027667
+2023-06-08 19:26:56 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.016915
+2023-06-08 19:26:57 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.016076
+2023-06-08 19:26:58 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.009947
+2023-06-08 19:26:58 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.016938
+2023-06-08 19:26:59 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.012993
+2023-06-08 19:27:00 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.019147
+2023-06-08 19:27:00 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.013792
+2023-06-08 19:27:01 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.014848
+2023-06-08 19:27:10 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.017886
+2023-06-08 19:27:11 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.017510
+2023-06-08 19:27:12 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.015747
+2023-06-08 19:27:12 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.011093
+2023-06-08 19:27:13 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.010891
+2023-06-08 19:27:14 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.004192
+2023-06-08 19:27:32 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 43 "-" "PostmanRuntime/7.28.4" 0.003221
+2023-06-08 19:27:40 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 43 "-" "PostmanRuntime/7.28.4" 0.001623
+2023-06-08 19:27:40 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 43 "-" "PostmanRuntime/7.28.4" 0.002069
+2023-06-08 19:27:44 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 43 "-" "PostmanRuntime/7.28.4" 0.010716
+2023-06-08 19:27:44 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 43 "-" "PostmanRuntime/7.28.4" 0.001833
+2023-06-08 19:27:45 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 43 "-" "PostmanRuntime/7.28.4" 0.003212
+2023-06-08 19:45:36 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 43 "-" "PostmanRuntime/7.28.4" 0.002745
+2023-06-08 19:46:04 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 43 "-" "PostmanRuntime/7.28.4" 0.002223
+2023-06-08 19:49:19 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 43 "-" "PostmanRuntime/7.28.4" 0.006639
+2023-06-08 20:02:48 - INFO: SIGINT received; starting forced shutdown
+2023-06-08 20:02:48 - INFO: shutting down idle worker
+2023-06-08 20:02:48 - INFO: shutting down idle worker
+2023-06-08 20:02:48 - INFO: shutting down idle worker
+2023-06-08 20:02:48 - INFO: shutting down idle worker
+2023-06-08 20:02:48 - INFO: shutting down idle worker
+2023-06-08 20:02:48 - INFO: shutting down idle worker
+2023-06-08 20:02:48 - INFO: shutting down idle worker
+2023-06-08 20:02:48 - INFO: accept thread stopped
+2023-06-08 20:02:48 - INFO: shutting down idle worker
+2023-06-08 20:02:48 - INFO: shutting down idle worker
+2023-06-08 20:02:48 - INFO: shutting down idle worker
+2023-06-08 20:02:55 - INFO: starting 10 workers
+2023-06-08 20:02:55 - INFO: Actix runtime found; starting in Actix runtime
+2023-06-08 20:03:04 - INFO: 127.0.0.1 "POST /api/v2/auth/login HTTP/1.1" 200 209 "-" "PostmanRuntime/7.28.4" 0.632005
+2023-06-08 20:03:16 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.045760
+2023-06-08 20:04:16 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.024174
+2023-06-08 20:04:21 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.023316
+2023-06-08 20:04:23 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.013389
+2023-06-08 20:04:25 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.018258
+2023-06-08 20:04:26 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.005164
+2023-06-08 20:04:27 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.023076
+2023-06-08 20:04:33 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.014936
+2023-06-08 20:04:39 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.023459
+2023-06-08 20:04:52 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.016457
+2023-06-08 20:05:00 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.017397
+2023-06-08 20:05:03 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.013222
+2023-06-08 20:05:04 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 200 307 "-" "PostmanRuntime/7.28.4" 0.016051
+2023-06-08 20:05:06 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 45 "-" "PostmanRuntime/7.28.4" 0.002340
+2023-06-08 20:05:07 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 45 "-" "PostmanRuntime/7.28.4" 0.002476
+2023-06-10 21:27:43 - INFO: SIGINT received; starting forced shutdown
+2023-06-10 21:27:43 - INFO: shutting down idle worker
+2023-06-10 21:27:43 - INFO: shutting down idle worker
+2023-06-10 21:27:43 - INFO: shutting down idle worker
+2023-06-10 21:27:43 - INFO: shutting down idle worker
+2023-06-10 21:27:43 - INFO: shutting down idle worker
+2023-06-10 21:27:43 - INFO: shutting down idle worker
+2023-06-10 21:27:43 - INFO: shutting down idle worker
+2023-06-10 21:27:43 - INFO: shutting down idle worker
+2023-06-10 21:27:43 - INFO: accept thread stopped
+2023-06-10 21:27:43 - INFO: shutting down idle worker
+2023-06-10 21:27:43 - INFO: shutting down idle worker
+2023-06-10 21:29:00 - INFO: starting 10 workers
+2023-06-10 21:29:00 - INFO: Actix runtime found; starting in Actix runtime
+2023-06-10 21:29:55 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.211899
+2023-06-10 21:30:07 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.023367
+2023-06-10 21:30:15 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.014220
+2023-06-10 21:30:21 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 409 82 "-" "PostmanRuntime/7.28.4" 0.004037
+2023-06-10 21:30:27 - INFO: 127.0.0.1 "POST /api/v2/auth/register HTTP/1.1" 200 309 "-" "PostmanRuntime/7.28.4" 0.482259
+2023-06-10 21:31:30 - INFO: 127.0.0.1 "POST /api/v2/auth/login HTTP/1.1" 200 590 "-" "PostmanRuntime/7.28.4" 0.491880
+2023-06-10 21:32:55 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 71 "-" "PostmanRuntime/7.28.4" 1.011062
+2023-06-10 21:33:10 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 71 "-" "PostmanRuntime/7.28.4" 1.003327
+2023-06-10 21:33:21 - INFO: 127.0.0.1 "GET /api/v2/users/me HTTP/1.1" 401 71 "-" "PostmanRuntime/7.28.4" 1.004058

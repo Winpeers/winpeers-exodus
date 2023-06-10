@@ -1,10 +1,7 @@
 use crate::config::config::Config;
 use crate::models::user::LoginUserSchema;
 use crate::models::{
-    schema::{
-        todos::dsl::todos,
-        users::{dsl::users, email, password, phone, username},
-    },
+    schema::{todos::dsl::todos, users::dsl::*},
     todo::Todo,
     user::{RegisterUserSchema, User},
 };
@@ -15,7 +12,10 @@ use argon2::{
 };
 use chrono::Utc;
 use deadpool::managed::Object;
-use diesel::{BoolExpressionMethods, ExpressionMethods, OptionalExtension, QueryDsl};
+use diesel::{
+    BoolExpressionMethods, ExpressionMethods, IntoSql, NullableExpressionMethods,
+    OptionalExtension, QueryDsl, QueryResult,
+};
 use diesel_async::{
     pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager},
     AsyncPgConnection, RunQueryDsl,
@@ -45,6 +45,7 @@ pub enum AuthenticationError {
     DatabaseError(diesel::result::Error),
     AsyncDatabaseError(diesel_async::pooled_connection::deadpool::PoolError),
     DBConnectionError,
+    ColumnNotFoundError,
 }
 
 impl From<argon2::password_hash::Error> for AuthenticationError {
@@ -54,15 +55,45 @@ impl From<argon2::password_hash::Error> for AuthenticationError {
 }
 
 impl Database {
-    pub fn new() -> Self {
-        let config = Config::init();
-        let manager = AsyncDieselConnectionManager::<diesel_async::AsyncPgConnection>::new(
-            config.database_url,
-        );
+    pub fn new(config: Config) -> Self {
+        let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(config.database_url);
         let pool = Pool::builder(manager)
             .build()
             .expect("Failed to create pool.");
         Database { pool }
+    }
+
+    pub async fn find_all_user_info(
+        &self,
+        user_email: &str,
+    ) -> Result<Option<User>, AuthenticationError> {
+        let mut conn = self.get_db_conn().await?;
+        let data = users
+            .filter(email.eq(user_email))
+            .select((
+                uuid_id,
+                email,
+                username,
+                phone,
+                password,
+                confirmed_email,
+                confirm_email_token,
+                confirmed_phone,
+                confirm_phone_token,
+                current_available_funds,
+                created_at,
+                updated_at,
+            ))
+            .first::<User>(&mut conn)
+            .await
+            .optional()
+            .map_err(AuthenticationError::DatabaseError)?;
+
+        if let Some(user) = data {
+            Ok(Some(user))
+        } else {
+            Ok(None)
+        }
     }
 
     async fn find_user_by_username_or_email_or_phone(
@@ -71,11 +102,7 @@ impl Database {
         user_email: &str,
         user_phone: &str,
     ) -> Result<Option<RegisterUserSchema>, AuthenticationError> {
-        let mut conn = self
-            .pool
-            .get()
-            .await
-            .map_err(AuthenticationError::AsyncDatabaseError)?;
+        let mut conn = self.get_db_conn().await?;
         let exists = users
             .filter(
                 username
@@ -84,25 +111,22 @@ impl Database {
                     .or(phone.eq(user_phone)),
             )
             .select((username, email, phone, password))
-            .first::<(String, String, Option<String>, String)>(&mut conn)
+            .first::<RegisterUserSchema>(&mut conn)
             .await
             .optional()
             .map_err(AuthenticationError::DatabaseError)?;
 
-        if let Some((user__name, user__email, user__phone, user__password)) = exists {
-            let user = RegisterUserSchema {
-                username: user__name,
-                email: user__email,
-                phone: user__phone,
-                password: user__password,
-            };
-            Ok(Some(user))
+        if let Some(user_data) = exists {
+            Ok(Some(user_data))
         } else {
             Ok(None)
         }
     }
 
-    pub async fn create_user(&self, req_body: RegisterUserSchema) -> ResponseData {
+    pub async fn create_user(
+        &self,
+        req_body: RegisterUserSchema,
+    ) -> Result<Option<ResponseData>, AuthenticationError> {
         //check if user already exist
         let user_phone = match req_body.phone {
             Some(user_phone) => user_phone,
@@ -115,24 +139,14 @@ impl Database {
                 &user_phone,
             )
             .await;
-        let mut conn = match self.pool.get().await {
-            Ok(conn) => conn,
-            Err(err) => {
-                error!("An error occurred. The error: {:?}", err);
-                return ResponseData {
-                    message: "Can't acquire connection to db".to_string(),
-                    user: None,
-                    data: None,
-                };
-                // return ResponseData {"Can't acquire connection to db".massage: "".to_string(), to_owned(), None, user: None };
-            }
-        };
+
+        let mut conn = self.get_db_conn().await?;
         match user_exists {
-            Ok(Some(_)) => ResponseData {
+            Ok(Some(_)) => Ok(Some(ResponseData {
                 message: "Data Exists".to_string(),
                 user: None,
                 data: None,
-            },
+            })),
             Ok(None) => {
                 let salt = SaltString::generate(&mut OsRng);
                 let hashed_password = Argon2::default()
@@ -141,7 +155,7 @@ impl Database {
                     .to_string();
 
                 let user = User {
-                    uuid: uuid::Uuid::new_v4().to_string(),
+                    uuid_id: uuid::Uuid::new_v4().to_string(),
                     email: req_body.email.to_string(),
                     username: req_body.username.to_string(),
                     phone: Some(user_phone),
@@ -160,28 +174,28 @@ impl Database {
                     .execute(&mut conn)
                     .await
                 {
-                    Ok(_) => ResponseData {
+                    Ok(_) => Ok(Some(ResponseData {
                         message: "Data Inserted".to_string(),
                         user: Option::from(user),
                         data: None,
-                    },
+                    })),
                     Err(err) => {
                         error!("An error occurred in the while trying to insert user into the db in the create_user function. The error: {:?}", err);
-                        ResponseData {
+                        Ok(Some(ResponseData {
                             message: "User Failed to be Inserted".to_string(),
                             user: None,
                             data: None,
-                        }
+                        }))
                     }
                 }
             }
             Err(err) => {
                 error!("An error occurred in the while trying to insert user into the db in the create_user function. The error: {:?}", err);
-                ResponseData {
+                Ok(Some(ResponseData {
                     message: "User Failed to be Inserted".to_string(),
                     user: None,
                     data: None,
-                }
+                }))
             }
         }
     }
@@ -206,7 +220,7 @@ impl Database {
         let check_if_user_exist = self
             .find_user_by_username_or_email_or_phone(&user_username, &user_email, &user_phone)
             .await;
-        // let mut conn = self.get_db_conn().await?;
+
         match check_if_user_exist {
             Ok(Some(user_exist)) => {
                 let parsed_hash = PasswordHash::new(&user_exist.password)?;

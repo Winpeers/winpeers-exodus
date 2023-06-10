@@ -1,6 +1,7 @@
-// use std::default::Default;
+use crate::config::config::Config;
+use crate::repository::database::Database;
+use crate::repository::redis::Redis;
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder, Result};
-// use diesel::insertable::DefaultableColumnInsertValue::Default;
 use serde::Serialize;
 
 mod api;
@@ -8,6 +9,7 @@ mod config;
 mod models;
 mod repository;
 mod service;
+mod util;
 
 #[derive(Serialize)]
 pub struct Response {
@@ -32,11 +34,23 @@ async fn not_found() -> Result<HttpResponse> {
     Ok(HttpResponse::NotFound().json(response))
 }
 
+pub struct AppState {
+    db: Database,
+    redis_db: Redis,
+    config: Config,
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     log4rs::init_file("./log-config.yml", Default::default()).expect("Log config file not found.");
-    let db = repository::database::Database::new();
-    let app_data = web::Data::new(db);
+    let config = Config::init();
+    let db = Database::new(config.clone());
+    let redis_db = Redis::new(config.clone());
+    let app_data = web::Data::new(AppState {
+        db,
+        redis_db,
+        config,
+    });
 
     HttpServer::new(move || {
         App::new()

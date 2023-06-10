@@ -1,7 +1,7 @@
 CREATE TABLE fantasy_contest
 (
     id                    SERIAL PRIMARY KEY,
-    uuid                  VARCHAR(50) UNIQUE NOT NULL,
+    uuid_id                  VARCHAR(50) UNIQUE NOT NULL,
     user_id               INTEGER     NOT NULL,
     player_ids            TEXT        NOT NULL,
     week_of_year          INTEGER     NOT NULL,

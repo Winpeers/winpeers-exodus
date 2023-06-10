@@ -1,9 +1,10 @@
-use crate::config::config::Config;
-use crate::models::token_claims::TokenClaims;
-use actix_web::error::ErrorUnauthorized;
-use actix_web::{dev::Payload, Error as ActixWebError};
-use actix_web::{http, FromRequest, HttpMessage, HttpRequest};
-use jsonwebtoken::{decode, DecodingKey, Validation};
+use crate::models::user::User;
+use crate::util::token;
+use crate::AppState;
+use actix_web::error::{ErrorInternalServerError, ErrorUnauthorized};
+use actix_web::{dev::Payload, web, Error as ActixWebError};
+use actix_web::{http, FromRequest, HttpRequest};
+use futures::executor::block_on;
 use serde::Serialize;
 use std::fmt;
 use std::fmt::Formatter;
@@ -22,18 +23,18 @@ impl fmt::Display for ErrorResponse {
 }
 
 pub struct JwtMiddleware {
-    pub user_id: uuid::Uuid,
+    pub user: User,
+    pub access_token_uuid: uuid::Uuid,
 }
 
 impl FromRequest for JwtMiddleware {
     type Error = ActixWebError;
     type Future = Ready<Result<Self, Self::Error>>;
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        let config = Config::init();
-        // let data = req.app_data::<web::Data<AppState>>().unwrap();
+        let data = req.app_data::<web::Data<AppState>>().unwrap();
 
-        let token = req
-            .cookie("token")
+        let access_token = req
+            .cookie("access_token")
             .map(|c| c.value().to_string())
             .or_else(|| {
                 req.headers()
@@ -41,33 +42,73 @@ impl FromRequest for JwtMiddleware {
                     .map(|h| h.to_str().unwrap().split_at(7).1.to_string())
             });
 
-        if token.is_none() {
+        if access_token.is_none() {
             let json_error = ErrorResponse {
                 status: "failed".to_string(),
-                message: "You are not authorize for this resource".to_string(),
+                message: "You are not logged in, please provide token".to_string(),
             };
             return ready(Err(ErrorUnauthorized(json_error)));
         }
 
-        let claims = match decode::<TokenClaims>(
-            &token.unwrap(),
-            &DecodingKey::from_secret(config.jwt_secret.as_ref()),
-            &Validation::default(),
+        let access_token_details = match token::verify_jwt_token(
+            data.config.access_token_public_key.to_owned(),
+            &access_token.unwrap(),
         ) {
-            Ok(c) => c.claims,
-            Err(_) => {
+            Ok(token_details) => token_details,
+            Err(e) => {
                 let json_error = ErrorResponse {
-                    status: "fail".to_string(),
-                    message: "Invalid token".to_string(),
+                    status: "failed".to_string(),
+                    message: format!("{:?}", e),
                 };
                 return ready(Err(ErrorUnauthorized(json_error)));
             }
         };
 
-        let user_id = uuid::Uuid::parse_str(claims.sub.as_str()).unwrap();
-        req.extensions_mut()
-            .insert::<uuid::Uuid>(user_id.to_owned());
+        let access_token_uuid =
+            uuid::Uuid::parse_str(&access_token_details.token_uuid.to_string()).unwrap();
 
-        ready(Ok(JwtMiddleware { user_id }))
+        let user_email_redis_result = async move {
+            let redis_result = data
+                .redis_db
+                .get_str(&access_token_uuid.clone().to_string())
+                .await;
+
+            match redis_result {
+                Ok(val) => Ok(val),
+                Err(_) => Err(ErrorUnauthorized(ErrorResponse {
+                    status: "failed".to_string(),
+                    message: "Token is invalid or session has expired".to_string(),
+                })),
+            }
+        };
+
+        let user_exists_result = async move {
+            let user_email = user_email_redis_result.await?;
+            match data.db.find_all_user_info(&user_email).await {
+                Ok(Some(user)) => Ok(user),
+                Ok(None) => {
+                    let json_error = ErrorResponse {
+                        status: "failed".to_string(),
+                        message: "The user belonging to this token no logger exists".to_string(),
+                    };
+                    Err(ErrorUnauthorized(json_error))
+                }
+                Err(_) => {
+                    let json_error = ErrorResponse {
+                        status: "error".to_string(),
+                        message: "Failed to check user existence".to_string(),
+                    };
+                    Err(ErrorInternalServerError(json_error))
+                }
+            }
+        };
+
+        match block_on(user_exists_result) {
+            Ok(user) => ready(Ok(JwtMiddleware {
+                user,
+                access_token_uuid,
+            })),
+            Err(e) => ready(Err(e)),
+        }
     }
 }
