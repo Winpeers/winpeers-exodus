@@ -1,22 +1,20 @@
-use crate::config::config::Config;
 use crate::config::jwt_auth;
-use crate::models::user::LoginUserSchema;
-use crate::models::{
+use crate::config::jwt_auth::{AuthError, ErrorResponse};
+use crate::model::user::LoginUserSchema;
+use crate::model::{
     response::FilteredUser,
-    token_claims::TokenClaims,
     user::{RegisterUserSchema, User},
 };
-use crate::repository::database::{AuthenticationError, Database, ResponseData};
-use crate::util::token::generate_jwt_token;
+use crate::repository::database::ResponseData;
+use crate::util::token::{generate_jwt_token, verify_jwt_token};
 use crate::AppState;
+use actix_web::error::{ErrorInternalServerError, ErrorUnauthorized};
 use actix_web::{
     cookie::{time::Duration as ActixWebDuration, Cookie},
-    web,
+    http, web,
     web::{Data, Json},
-    HttpMessage, HttpRequest, HttpResponse, Responder,
+    HttpRequest, HttpResponse, Responder,
 };
-use chrono::{Duration, Utc};
-use jsonwebtoken::{encode, EncodingKey, Header};
 use log::error;
 use serde_json::json;
 
@@ -100,7 +98,7 @@ pub async fn login_user_service(
                     Err(e) => {
                         error!("An error has occurred. Error: {:?}", e);
                         return HttpResponse::BadGateway()
-                            .json(serde_json::json!({"status": "failed", "message": "An error has occurred"}));
+                            .json(json!({"status": "failed", "message": "An error has occurred"}));
                     }
                 };
 
@@ -126,9 +124,8 @@ pub async fn login_user_service(
                     )
                     .await;
                 if let Err(e) = access_result {
-                    return HttpResponse::UnprocessableEntity().json(
-                        serde_json::json!({"status": "error", "message": format_args!("{}", e)}),
-                    );
+                    return HttpResponse::UnprocessableEntity()
+                        .json(json!({"status": "error", "message": format_args!("{}", e)}));
                 }
 
                 let refresh_result = data
@@ -141,9 +138,8 @@ pub async fn login_user_service(
                     .await;
 
                 if let Err(e) = refresh_result {
-                    return HttpResponse::UnprocessableEntity().json(
-                        serde_json::json!({"status": "error", "message": format_args!("{}", e)}),
-                    );
+                    return HttpResponse::UnprocessableEntity()
+                        .json(json!({"status": "error", "message": format_args!("{}", e)}));
                 }
 
                 let access_cookie =
@@ -155,15 +151,17 @@ pub async fn login_user_service(
                         ))
                         .http_only(true)
                         .finish();
-                let refresh_cookie =
-                    Cookie::build("refresh_token", refresh_token_details.token.unwrap())
-                        .path("/")
-                        .max_age(ActixWebDuration::new(
-                            (data.config.refresh_token_max_age * 60) as i64,
-                            0,
-                        ))
-                        .http_only(true)
-                        .finish();
+                let refresh_cookie = Cookie::build(
+                    "refresh_token",
+                    refresh_token_details.token.clone().unwrap(),
+                )
+                .path("/")
+                .max_age(ActixWebDuration::new(
+                    (data.config.refresh_token_max_age * 60) as i64,
+                    0,
+                ))
+                .http_only(true)
+                .finish();
                 let logged_in_cookie = Cookie::build("logged_in", "true")
                     .path("/")
                     .max_age(ActixWebDuration::new(
@@ -177,35 +175,10 @@ pub async fn login_user_service(
                     .cookie(access_cookie)
                     .cookie(refresh_cookie)
                     .cookie(logged_in_cookie)
-                    .json(serde_json::json!({"status": "success", "access_token": access_token_details.token.unwrap()}))
-
-                // let now = Utc::now();
-                // let iat = now.timestamp() as usize;
-                // let exp = (now + Duration::minutes(1)).timestamp() as usize;
-                // let claims = TokenClaims {
-                //     sub: data_schemas.email,
-                //     iat,
-                //     exp,
-                // };
-                //
-                // let token = encode(
-                //     &Header::default(),
-                //     &claims,
-                //     &EncodingKey::from_secret(&data.config.jwt_secret.as_ref()),
-                // )
-                // .unwrap();
-                //
-                // let cookie = Cookie::build("token", token.to_owned())
-                //     .path("/")
-                //     .max_age(ActixWebDuration::new(60, 0))
-                //     .http_only(true)
-                //     .finish();
-                //
-                // HttpResponse::Ok().cookie(cookie).json(json!({
-                //     "status": "success",
-                //     "token": token,
-                //     "exp": exp,
-                // }))
+                    .json(json!({
+                        "status": "success", "access_token": access_token_details.token.unwrap(), 
+                        "refresh_token": refresh_token_details.token.unwrap(), 
+                        "expires_in": data.config.access_token_max_age * 60}))
             }
             None => HttpResponse::BadRequest().json(serde_json::json!({
                 "status": "failed",
@@ -229,34 +202,139 @@ pub async fn login_user_service(
     }
 }
 
-pub async fn get_all_user_info_service(
-    data: Data<AppState>,
-    req: HttpRequest,
-    _: jwt_auth::JwtMiddleware,
-) -> impl Responder {
-    let user_email = if let Some(user_email) = req.extensions().get::<String>() {
-        user_email.clone()
+pub async fn get_all_user_info_service(jwt_guard: jwt_auth::JwtMiddleware) -> impl Responder {
+    let json_response = json!({
+        "status":  "success",
+        "data": serde_json::json!({
+            "user": filter_user_record(&jwt_guard.user)
+        })
+    });
+
+    HttpResponse::Ok().json(json_response)
+}
+
+pub async fn refresh_auth_token_service(req: HttpRequest, data: Data<AppState>) -> impl Responder {
+    let message = "Could not refresh access token. Login again.";
+
+    let refresh_token = if let Some(cookie) = req.cookie("refresh_token") {
+        Some(cookie.value().to_string())
     } else {
-        return HttpResponse::BadRequest().finish();
+        req.headers()
+            .get(http::header::HeaderName::from_static(
+                "x-winp-refresh-token",
+            ))
+            .and_then(|header| header.to_str().ok())
+            .filter(|header_value| !header_value.is_empty())
+            .and_then(|header_value| {
+                if header_value.starts_with("Winpeers ") {
+                    Some(
+                        header_value
+                            .strip_prefix("Winpeers ")
+                            .unwrap_or("")
+                            .to_string(),
+                    )
+                } else {
+                    None
+                }
+            })
     };
 
-    match data.db.find_all_user_info(&user_email).await {
-        Ok(Some(data)) => {
-            let response = serde_json::json!({
-               "status": "success",
-                "data": serde_json::json!({
-                    "user": filter_user_record(&data)
-                })
-            });
-            HttpResponse::Ok().json(response)
-        }
-        Err(auth_error) => {
-            error!(
-                "An error occurred in the login_user_service function. The error: {:?}",
-                auth_error
-            );
-            HttpResponse::Unauthorized().finish()
-        }
-        _ => HttpResponse::Unauthorized().finish(),
+    if refresh_token.is_none() {
+        return HttpResponse::Forbidden()
+            .json(serde_json::json!({"status": "failed", "message": message}));
     }
+
+    let refresh_token_details = match verify_jwt_token(
+        data.config.refresh_token_public_key.to_owned(),
+        &refresh_token.unwrap(),
+    ) {
+        Ok(token_details) => token_details,
+        Err(e) => {
+            error!("An error occurred. The error: {:?}", e);
+            return HttpResponse::Forbidden().json(
+                serde_json::json!({"status": "failed", "message": "The refresh token has expired"}),
+            );
+        }
+    };
+
+    let user_email = match data
+        .redis_db
+        .get_str(&refresh_token_details.token_uuid.to_string())
+        .await
+    {
+        Ok(val) => val,
+        Err(_) => {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "status": "failed",
+                "message": message
+            }))
+        }
+    };
+
+    let user = match data.db.find_all_user_info(&user_email).await {
+        Ok(Some(user)) => user,
+        Ok(None) => {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "status":"failed",
+                "message": message
+            }));
+        }
+        Err(_) => {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "status":"failed",
+                "message": message
+            }));
+        }
+    };
+
+    let access_token_details = match generate_jwt_token(
+        user.email.clone(),
+        data.config.access_token_max_age,
+        data.config.access_token_private_key.to_string(),
+    ) {
+        Ok(token_details) => token_details,
+        Err(e) => {
+            error!("An error occurred. The error: {:?}", e);
+            return HttpResponse::BadGateway().json(serde_json::json!({
+                "status": "failed",
+                "message": "An error occurred. Access token generation failed"
+            }));
+        }
+    };
+
+    let access_result = data
+        .redis_db
+        .set_str(
+            &access_token_details.token_uuid.to_string(),
+            &user.email,
+            (data.config.access_token_max_age * 60) as usize,
+        )
+        .await;
+    if let Err(e) = access_result {
+        return HttpResponse::UnprocessableEntity()
+            .json(json!({"status": "error", "message": format_args!("{}", e)}));
+    }
+
+    let access_cookie = Cookie::build("access_token", access_token_details.token.clone().unwrap())
+        .path("/")
+        .max_age(ActixWebDuration::new(
+            (data.config.access_token_max_age * 60) as i64,
+            0,
+        ))
+        .http_only(true)
+        .finish();
+
+    let logged_in_cookie = Cookie::build("logged_in", "true")
+        .path("/")
+        .max_age(ActixWebDuration::new(
+            (data.config.access_token_max_age * 60) as i64,
+            0,
+        ))
+        .http_only(false)
+        .finish();
+
+    HttpResponse::Ok()
+        .cookie(access_cookie)
+        .cookie(logged_in_cookie)
+        .json(json!({"status": "success", "access_token": access_token_details.token.unwrap()}))
 }

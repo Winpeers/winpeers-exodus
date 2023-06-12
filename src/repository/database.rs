@@ -1,8 +1,7 @@
 use crate::config::config::Config;
-use crate::models::user::LoginUserSchema;
-use crate::models::{
-    schema::{todos::dsl::todos, users::dsl::*},
-    todo::Todo,
+use crate::model::user::LoginUserSchema;
+use crate::model::{
+    schema::users::dsl::*,
     user::{RegisterUserSchema, User},
 };
 use crate::repository::database::AuthenticationError::IncorrectPassword;
@@ -22,7 +21,6 @@ use diesel_async::{
 };
 use log::error;
 use rand_core::OsRng;
-use std::error::Error as StdError;
 
 pub type DBPool = deadpool::managed::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>;
 
@@ -246,112 +244,5 @@ impl Database {
                 Err(AuthenticationError::DBConnectionError)
             }
         }
-    }
-
-    pub async fn create_todo(&self, todo: Todo) -> Result<Todo, Box<dyn StdError>> {
-        let todo = Todo {
-            id: uuid::Uuid::new_v4().to_string(),
-            created_at: Some(Utc::now().naive_utc()),
-            updated_at: Some(Utc::now().naive_utc()),
-            ..todo
-        };
-
-        let mut conn = self.pool.get().await.map_err(Box::new)?;
-
-        diesel::insert_into(todos)
-            .values(&todo)
-            .execute(&mut conn)
-            // .expect("Error creating new todo")
-            .await
-            .map_err(Box::new)?;
-        Ok(todo)
-    }
-
-    pub async fn get_todos(&self) -> Result<Vec<Todo>, Box<dyn StdError>> {
-        let mut conn = self.pool.get().await.map_err(Box::new)?;
-        Ok(todos.load::<Todo>(&mut conn).await.map_err(Box::new)?)
-    }
-
-    pub async fn get_todos_by_id(&self, todo_id: &str) -> Option<Todo> {
-        let mut conn = match self.pool.get().await {
-            Ok(conn) => conn,
-            Err(err) => {
-                //log the error then return None
-                error!("An error occurred. The error: {:?}", err);
-                // println!("Error: {:?}", err);
-                return None;
-            }
-        };
-        let todo = match todos.find(todo_id).get_result::<Todo>(&mut conn).await {
-            Ok(todo) => todo,
-            Err(err) => {
-                //log the error then return None
-                error!(
-                    "An error occurred in the get_todos_by_id function. The error: {}",
-                    err.to_string()
-                );
-                // println!("the second error: {}", err.to_string());
-                return None;
-            }
-        };
-
-        Some(todo)
-    }
-
-    pub async fn update_todo_by_id(&self, todo_id: &str, mut todo: Todo) -> Option<Todo> {
-        let mut conn = match self.pool.get().await {
-            Ok(conn) => conn,
-            Err(err) => {
-                //log the error then return None
-                error!("An error occurred. The error: {:?}", err);
-                // println!("Error: {:?}", err);
-                return None;
-            }
-        };
-        todo.updated_at = Some(Utc::now().naive_utc());
-        let todo = match diesel::update(todos.find(todo_id))
-            .set(&todo)
-            .get_result::<Todo>(&mut conn)
-            .await
-        {
-            Ok(todo) => todo,
-            Err(err) => {
-                //log the error then return None
-                error!(
-                    "An error occurred in the update_todo_by_id function. The error: {}",
-                    err.to_string()
-                );
-                // println!("the third error: {}", err.to_string());
-                return None;
-            }
-        };
-
-        Some(todo)
-    }
-
-    pub async fn delete_todo_by_id(&self, todo_id: &str) -> Option<usize> {
-        let mut conn = match self.pool.get().await {
-            Ok(conn) => conn,
-            Err(err) => {
-                //log the error then return None
-                error!("An error occurred. The error: {:?}", err);
-                // println!("Error: {:?}", err);
-                return None;
-            }
-        };
-        let count = match diesel::delete(todos.find(todo_id)).execute(&mut conn).await {
-            Ok(count) => count,
-            Err(err) => {
-                //log the error then return None
-                error!(
-                    "An error occurred in the update_todo_by_id function. The error: {}",
-                    err.to_string()
-                );
-                // println!("the fourth error: {}", err.to_string());
-                return None;
-            }
-        };
-
-        Some(count)
     }
 }

@@ -1,4 +1,4 @@
-use crate::models::token_claims::{TokenClaims, TokenDetails};
+use crate::model::token_claims::{TokenClaims, TokenDetails};
 use base64::engine::general_purpose;
 use base64::Engine;
 use uuid::Uuid;

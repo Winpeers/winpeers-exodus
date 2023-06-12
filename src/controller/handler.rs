@@ -1,10 +1,12 @@
 use crate::config::jwt_auth;
-use crate::models::user::{LoginUserSchema, RegisterUserSchema};
-use crate::repository::database::Database;
-use crate::service::user::{create_user_service, get_all_user_info_service, login_user_service};
+use crate::model::user::{LoginUserSchema, RegisterUserSchema};
+use crate::service::user::{
+    create_user_service, get_all_user_info_service, login_user_service, refresh_auth_token_service,
+};
 use crate::AppState;
+use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_web::cookie::{time::Duration as ActixWebDuration, Cookie};
-use actix_web::web::{Data, Json};
+use actix_web::web::{service, Data, Json};
 use actix_web::{get, post, web, HttpRequest, HttpResponse, Responder};
 use serde_json::json;
 
@@ -38,20 +40,22 @@ async fn logout_user_handler(_: jwt_auth::JwtMiddleware) -> impl Responder {
 }
 
 #[get("/users/me")]
-async fn get_user_info_handler(
-    data: Data<AppState>,
-    req: HttpRequest,
-    auth: jwt_auth::JwtMiddleware,
-) -> impl Responder {
-    get_all_user_info_service(data, req, auth).await
+async fn get_user_info_handler(auth: jwt_auth::JwtMiddleware) -> impl Responder {
+    get_all_user_info_service(auth).await
+}
+
+#[get("/auth/refresh")]
+async fn refresh_auth_handler(req: HttpRequest, data: web::Data<AppState>) -> impl Responder {
+    refresh_auth_token_service(req, data).await
 }
 
 pub fn config(conf: &mut web::ServiceConfig) {
     let scope = web::scope("/api/v2")
+        .service(get_user_info_handler)
         .service(register_user_handler)
         .service(login_user_handler)
         .service(logout_user_handler)
-        .service(get_user_info_handler);
+        .service(refresh_auth_handler);
 
     conf.service(scope);
 }

@@ -2,7 +2,7 @@ use diesel::{AsChangeset, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Queryable, Insertable, AsChangeset)]
-#[diesel(table_name = crate::models::schema::users)]
+#[diesel(table_name = crate::model::schema::users)]
 pub struct User {
     #[serde(default)]
     pub uuid_id: String,
@@ -21,7 +21,7 @@ pub struct User {
     pub updated_at: Option<chrono::NaiveDateTime>,
 }
 
-#[derive(Debug, Deserialize, Queryable)]
+#[derive(Debug, Deserialize, Queryable, Clone)]
 pub struct RegisterUserSchema {
     pub username: String,
     pub email: String,
