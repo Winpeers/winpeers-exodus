@@ -11,10 +11,7 @@ use argon2::{
 };
 use chrono::Utc;
 use deadpool::managed::Object;
-use diesel::{
-    BoolExpressionMethods, ExpressionMethods, IntoSql, NullableExpressionMethods,
-    OptionalExtension, QueryDsl, QueryResult,
-};
+use diesel::{BoolExpressionMethods, ExpressionMethods, OptionalExtension, QueryDsl};
 use diesel_async::{
     pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager},
     AsyncPgConnection, RunQueryDsl,
@@ -37,13 +34,10 @@ pub struct ResponseData {
 #[derive(Debug)]
 pub enum AuthenticationError {
     IncorrectPassword,
-    NoUsernameSet,
-    NoPasswordSet,
     Argon2Error(argon2::password_hash::Error),
     DatabaseError(diesel::result::Error),
     AsyncDatabaseError(diesel_async::pooled_connection::deadpool::PoolError),
     DBConnectionError,
-    ColumnNotFoundError,
 }
 
 impl From<argon2::password_hash::Error> for AuthenticationError {

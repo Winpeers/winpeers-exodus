@@ -1,14 +1,12 @@
-use crate::config::jwt_auth;
+use crate::config::jwt_auth::JwtMiddleware;
 use crate::model::user::{LoginUserSchema, RegisterUserSchema};
 use crate::service::user::{
-    create_user_service, get_all_user_info_service, login_user_service, refresh_auth_token_service,
+    create_user_service, get_all_user_info_service, login_user_service, logout_user_service,
+    refresh_auth_token_service,
 };
 use crate::AppState;
-use actix_governor::{Governor, GovernorConfigBuilder};
-use actix_web::cookie::{time::Duration as ActixWebDuration, Cookie};
-use actix_web::web::{service, Data, Json};
-use actix_web::{get, post, web, HttpRequest, HttpResponse, Responder};
-use serde_json::json;
+use actix_web::web::{Data, Json};
+use actix_web::{get, post, web, HttpRequest, Responder};
 
 #[post("/auth/register")]
 async fn register_user_handler(
@@ -27,20 +25,16 @@ async fn login_user_handler(
 }
 
 #[post("/auth/logout")]
-async fn logout_user_handler(_: jwt_auth::JwtMiddleware) -> impl Responder {
-    let cookie = Cookie::build("token", "")
-        .path("/")
-        .max_age(ActixWebDuration::new(-1, 0))
-        .http_only(true)
-        .finish();
-
-    HttpResponse::Ok().cookie(cookie).json(json!({
-        "status": "success"
-    }))
+async fn logout_user_handler(
+    req: HttpRequest,
+    auth_guard: JwtMiddleware,
+    data: Data<AppState>,
+) -> impl Responder {
+    logout_user_service(req, auth_guard, data).await
 }
 
 #[get("/users/me")]
-async fn get_user_info_handler(auth: jwt_auth::JwtMiddleware) -> impl Responder {
+async fn get_user_info_handler(auth: JwtMiddleware) -> impl Responder {
     get_all_user_info_service(auth).await
 }
 

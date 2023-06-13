@@ -1,15 +1,14 @@
 use crate::model::user::User;
 use crate::util::token;
 use crate::AppState;
-use actix_web::error::{ErrorInternalServerError, ErrorUnauthorized};
 use actix_web::{dev::Payload, web, HttpResponse, ResponseError};
 use actix_web::{http, FromRequest, HttpRequest};
-use futures::executor::block_on;
 use log::error;
 use serde::Serialize;
 use std::fmt;
 use std::fmt::{Display, Formatter};
-use std::future::{ready, Ready};
+use std::future::ready;
+use std::pin::Pin;
 
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
@@ -54,9 +53,10 @@ pub struct JwtMiddleware {
 
 impl FromRequest for JwtMiddleware {
     type Error = AuthError;
-    type Future = Ready<Result<Self, Self::Error>>;
+    type Future = Pin<Box<dyn futures::Future<Output = Result<Self, Self::Error>>>>;
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        let data = req.app_data::<web::Data<AppState>>().unwrap();
+        let datax = req.app_data::<web::Data<AppState>>().unwrap();
+        let data = datax.clone();
 
         let access_token = if let Some(cookie) = req.cookie("access_token") {
             Some(cookie.value().to_string())
@@ -79,7 +79,7 @@ impl FromRequest for JwtMiddleware {
                 status: "failed".to_string(),
                 message: "You are not logged in, please provide token".to_string(),
             });
-            return ready(Err(json_error));
+            return Box::pin(ready(Err(json_error)));
         }
 
         let access_token_details = match token::verify_jwt_token(
@@ -93,58 +93,52 @@ impl FromRequest for JwtMiddleware {
                     status: "failed".to_string(),
                     message: "The token has expired".to_string(),
                 });
-                return ready(Err(json_error));
+                return Box::pin(ready(Err(json_error)));
             }
         };
 
         let access_token_uuid =
             uuid::Uuid::parse_str(&access_token_details.token_uuid.to_string()).unwrap();
 
-        let user_email_redis_result = async move {
+        Box::pin(async move {
             let redis_result = data
                 .redis_db
                 .get_str(&access_token_uuid.clone().to_string())
                 .await;
 
-            match redis_result {
-                Ok(val) => Ok(val),
+            let user_email = match redis_result {
+                Ok(val) => val,
                 Err(e) => {
                     error!("The error: {:?}", e);
-                    Err(ErrorUnauthorized(AuthError(ErrorResponse {
+                    return Err(AuthError(ErrorResponse {
                         status: "failed".to_string(),
                         message: "Token is invalid or session has expired".to_string(),
-                    })))
+                    }));
                 }
-            }
-        };
+            };
 
-        let user_exists_result = async move {
-            let user_email = user_email_redis_result.await?;
-            match data.db.find_all_user_info(&user_email).await {
-                Ok(Some(user)) => Ok(user),
+            let user = match data.db.find_all_user_info(&user_email).await {
+                Ok(Some(user)) => user,
                 Ok(None) => {
                     let json_error = AuthError(ErrorResponse {
                         status: "failed".to_string(),
                         message: "The user belonging to this token no logger exists".to_string(),
                     });
-                    Err(ErrorUnauthorized(json_error))
+                    return Err(json_error);
                 }
                 Err(_) => {
                     let json_error = AuthError(ErrorResponse {
                         status: "error".to_string(),
                         message: "Failed to check user existence".to_string(),
                     });
-                    Err(ErrorInternalServerError(json_error))
+                    return Err(json_error);
                 }
-            }
-        };
+            };
 
-        match block_on(user_exists_result) {
-            Ok(user) => ready(Ok(JwtMiddleware {
+            Ok(JwtMiddleware {
                 user,
                 access_token_uuid,
-            })),
-            Err(e) => ready(Err(e.into())),
-        }
+            })
+        })
     }
 }
