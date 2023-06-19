@@ -1,13 +1,18 @@
 use crate::config::jwt_auth::JwtMiddleware;
-use crate::model::schema::users::{confirm_email_token, confirmed_phone};
-use crate::model::user::{LoginUserSchema, VerifyEmailRequest};
-use crate::model::{
-    response::FilteredUser,
-    user::{RegisterUserSchema, User},
+use crate::models::response::ConfirmEmailResponse;
+use crate::models::user::{
+    ForgotPasswordRequest, LoginUserSchemaRequest, NewPasswordRequest, UpdateEmailAttributes,
+    VerifyEmailRequest,
 };
-use crate::repository::database::{AuthenticationError, ResponseData};
-use crate::util::random_num_gen::generate_random_number;
-use crate::util::send_email::{send_email_verify_mail, send_welcome_email};
+use crate::models::{
+    response::FilteredUser,
+    user::{RegisterUserSchemaRequest, User},
+};
+use crate::repository::database::ResponseData;
+use crate::util::random_num_or_string_gen::{generate_random_number, generate_random_string};
+use crate::util::send_email::{
+    send_email_verify_mail, send_password_reset_mail, send_welcome_email,
+};
 use crate::util::token::{generate_jwt_token, verify_jwt_token};
 use crate::AppState;
 use actix_web::{
@@ -16,9 +21,12 @@ use actix_web::{
     web::{Data, Json},
     HttpRequest, HttpResponse, Responder,
 };
-use futures::future::err;
+use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHasher, PasswordVerifier};
 use log::error;
+use rand_core::OsRng;
 use serde_json::json;
+use std::default::Default;
 use validator::Validate;
 
 fn filter_user_record(user: &User) -> FilteredUser {
@@ -28,9 +36,7 @@ fn filter_user_record(user: &User) -> FilteredUser {
         username: user.username.to_owned(),
         phone: user.phone.to_owned(),
         confirmed_email: user.confirmed_email,
-        confirmed_email_token: user.confirm_email_token,
         confirmed_phone: user.confirmed_phone,
-        current_available_funds: user.current_available_funds.to_owned(),
         created_at: Some(user.created_at.unwrap()),
         updated_at: Some(user.updated_at.unwrap()),
     }
@@ -38,7 +44,7 @@ fn filter_user_record(user: &User) -> FilteredUser {
 
 pub async fn create_user_service(
     data_b: Data<AppState>,
-    new_user: Json<RegisterUserSchema>,
+    new_user: Json<RegisterUserSchemaRequest>,
 ) -> impl Responder {
     let is_valid = new_user.validate();
     match is_valid {
@@ -68,15 +74,24 @@ pub async fn create_user_service(
                 })),
                 "Data Inserted" => match &res_data.user {
                     Some(data) => {
+                        let data_clone = data.clone();
                         let random_number = generate_random_number().await;
+                        let updated_user = UpdateEmailAttributes {
+                            email: data_clone.email,
+                            confirm_email_token: Some(random_number as i32),
+                            confirmed_email: Some(false),
+                            ..Default::default()
+                        };
                         match data_b
                             .db
-                            .update_email_verification_things(data.to_owned(), random_number, false)
+                            .update_email_verification_things(updated_user)
                             .await
                         {
-                            Ok(user) => {
-                                let user_info = &user.unwrap_or_else(|| User {
-                                    ..Default::default()
+                            Ok(confirm_email_response) => {
+                                let user_info = &confirm_email_response.unwrap_or_else(|| {
+                                    ConfirmEmailResponse {
+                                        ..Default::default()
+                                    }
                                 });
                                 match send_email_verify_mail(
                                     &user_info.username,
@@ -92,7 +107,7 @@ pub async fn create_user_service(
                                 let user_response = json!({
                                     "status": "success",
                                     "data": {
-                                        "user": filter_user_record(user_info),
+                                        "user": filter_user_record(data),
                                     }
                                 });
 
@@ -122,7 +137,7 @@ pub async fn create_user_service(
 }
 
 pub async fn login_user_service(
-    login_user: Json<LoginUserSchema>,
+    login_user: Json<LoginUserSchemaRequest>,
     data: Data<AppState>,
 ) -> impl Responder {
     let is_valid = login_user.validate();
@@ -495,15 +510,18 @@ pub async fn verify_email(
                     .confirm_email_token
                     .eq(&Some(tok.as_str().parse::<i32>().unwrap()))
                 {
-                    match data
-                        .db
-                        .update_email_verification_things(user, 0, true)
-                        .await
-                    {
-                        Ok(user) => {
-                            let user_info = &user.unwrap_or_else(|| User {
-                                ..Default::default()
-                            });
+                    let updated_user = UpdateEmailAttributes {
+                        email: user.email,
+                        confirm_email_token: None,
+                        confirmed_email: Some(true),
+                        ..Default::default()
+                    };
+                    match data.db.update_email_verification_things(updated_user).await {
+                        Ok(confirm_email_response) => {
+                            let user_info =
+                                &confirm_email_response.unwrap_or_else(|| ConfirmEmailResponse {
+                                    ..Default::default()
+                                });
                             match send_welcome_email(&user_info.username, &user_info.email).await {
                                 Ok(_) => {}
                                 Err(_err) => {}
@@ -531,4 +549,129 @@ pub async fn verify_email(
         }
         Err(err) => HttpResponse::BadRequest().json(err),
     }
+}
+
+pub async fn reset_password_service(
+    reset_pass_req: Json<ForgotPasswordRequest>,
+    data: Data<AppState>,
+) -> impl Responder {
+    let is_valid = reset_pass_req.validate();
+    match is_valid {
+        Ok(_) => {
+            let reset_password_email = reset_pass_req.into_inner().email;
+            match data
+                .db
+                .find_user_by_username_or_email_or_phone("", &reset_password_email, "")
+                .await
+            {
+                Ok(Some(user_info)) => {
+                    let random_number = generate_random_number().await;
+                    let tokenizer = generate_random_string(16).await;
+                    let updated_user = UpdateEmailAttributes {
+                        email: user_info.email,
+                        reset_password_token: Some(random_number as i32),
+                        reset_password_tokenizer: Some(tokenizer.clone()),
+                        ..Default::default()
+                    };
+                    match data.db.update_email_verification_things(updated_user).await {
+                        Ok(confirm_email_response) => {
+                            let user_information =
+                                &confirm_email_response.unwrap_or_else(|| ConfirmEmailResponse {
+                                    ..Default::default()
+                                });
+
+                            match send_password_reset_mail(
+                                &user_information.username,
+                                &user_information.email,
+                                random_number,
+                            )
+                            .await
+                            {
+                                Ok(_) => {}
+                                Err(_err) => {}
+                            }
+
+                            HttpResponse::Ok().json(json!({
+                                "status": "success",
+                                "tokenizer": tokenizer,
+                                "message": "Password reset token sent to your email"
+                            }))
+                        }
+                        Err(e) => {
+                            error!("An error occurred. The error: {:?}", e);
+                            HttpResponse::BadRequest().json(json!({
+                                "status": "failed",
+                                "message": "Password token verification failed"
+                            }))
+                        }
+                    }
+                }
+                Ok(None) => HttpResponse::Forbidden().finish(),
+                Err(err) => {
+                    error!("An error occurred. The error: {:?}", err);
+                    HttpResponse::Forbidden().finish()
+                }
+            }
+        }
+        Err(err) => HttpResponse::BadRequest().json(err),
+    }
+    // HttpResponse::Ok().finish()
+}
+
+pub async fn set_new_password_service(
+    new_pass_req: Json<NewPasswordRequest>,
+    data: Data<AppState>,
+) -> impl Responder {
+    let is_valid = new_pass_req.validate();
+    match is_valid {
+        Ok(_) => {
+            let pass_req = new_pass_req.into_inner();
+            let new_password = pass_req.new_password;
+            let email = pass_req.email;
+            let tokenizer = pass_req.tokenizer;
+            let salt = SaltString::generate(&mut OsRng);
+            let hashed_password = Argon2::default()
+                .hash_password(new_password.as_bytes(), &salt)
+                .expect("Error while hashing password")
+                .to_string();
+
+            let updated_user = UpdateEmailAttributes {
+                email,
+                password: Some(hashed_password),
+                ..Default::default()
+            };
+            match data.db.update_email_verification_things(updated_user).await {
+                Ok(confirm_email_response) => {
+                    let user_information =
+                        &confirm_email_response.unwrap_or_else(|| ConfirmEmailResponse {
+                            ..Default::default()
+                        });
+                    if user_information
+                        .reset_password_tokenizer
+                        .eq(&Some(tokenizer))
+                    {
+                        HttpResponse::Ok().json(json!({
+                            "status": "success",
+                            "message": "New password set successfully"
+                        }))
+                    } else {
+                        HttpResponse::ExpectationFailed().json(json!({
+                            "status": "failed",
+                            "message": ""
+                        }))
+                    }
+                }
+                Err(e) => {
+                    error!("An error occurred. The error: {:?}", e);
+                    HttpResponse::BadRequest().json(json!({
+                        "status": "failed",
+                        "message": "New password set failed"
+                    }))
+                }
+            }
+        }
+        Err(err) => HttpResponse::BadRequest().json(err),
+    }
+
+    // HttpResponse::Ok().finish()
 }

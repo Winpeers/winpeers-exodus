@@ -1,8 +1,11 @@
 use crate::config::jwt_auth::JwtMiddleware;
-use crate::model::user::{LoginUserSchema, RegisterUserSchema, VerifyEmailRequest};
+use crate::models::user::{
+    ForgotPasswordRequest, LoginUserSchemaRequest, NewPasswordRequest, RegisterUserSchemaRequest,
+    VerifyEmailRequest,
+};
 use crate::service::user::{
     create_user_service, get_all_user_info_service, login_user_service, logout_user_service,
-    refresh_auth_token_service, verify_email,
+    refresh_auth_token_service, reset_password_service, set_new_password_service, verify_email,
 };
 use crate::AppState;
 use actix_web::web::{service, Data, Json};
@@ -11,7 +14,7 @@ use actix_web::{get, post, web, HttpRequest, Responder};
 #[post("/auth/register")]
 async fn register_user_handler(
     data: Data<AppState>,
-    new_user: Json<RegisterUserSchema>,
+    new_user: Json<RegisterUserSchemaRequest>,
 ) -> impl Responder {
     create_user_service(data, new_user).await
 }
@@ -19,7 +22,7 @@ async fn register_user_handler(
 #[post("/auth/login")]
 async fn login_user_handler(
     data: Data<AppState>,
-    login_user: Json<LoginUserSchema>,
+    login_user: Json<LoginUserSchemaRequest>,
 ) -> impl Responder {
     login_user_service(login_user, data).await
 }
@@ -52,6 +55,22 @@ async fn verify_email_handler(
     verify_email(verify_email_req, jwt_guard, data).await
 }
 
+#[post("/user/request-password-change")]
+async fn send_password_reset_mail_handler(
+    reset_pass_req: Json<ForgotPasswordRequest>,
+    data: Data<AppState>,
+) -> impl Responder {
+    reset_password_service(reset_pass_req, data).await
+}
+
+#[post("/user/change-password")]
+async fn set_new_password_handler(
+    new_pass_req: Json<NewPasswordRequest>,
+    data: Data<AppState>,
+) -> impl Responder {
+    set_new_password_service(new_pass_req, data).await
+}
+
 pub fn config(conf: &mut web::ServiceConfig) {
     let scope = web::scope("/api/v2")
         .service(get_user_info_handler)
@@ -59,7 +78,9 @@ pub fn config(conf: &mut web::ServiceConfig) {
         .service(login_user_handler)
         .service(logout_user_handler)
         .service(refresh_auth_handler)
-        .service(verify_email_handler);
+        .service(verify_email_handler)
+        .service(send_password_reset_mail_handler)
+        .service(set_new_password_handler);
 
     conf.service(scope);
 }

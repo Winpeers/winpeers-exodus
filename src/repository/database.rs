@@ -1,8 +1,9 @@
 use crate::config::config::Config;
-use crate::model::user::{ConfirmEmailToken, LoginUserSchema};
-use crate::model::{
+use crate::models::response::ConfirmEmailResponse;
+use crate::models::user::{LoginUserSchemaRequest, UpdateEmailAttributes};
+use crate::models::{
     schema::users::dsl::*,
-    user::{RegisterUserSchema, User},
+    user::{RegisterUserSchemaRequest, User},
 };
 use crate::repository::database::AuthenticationError::{IncorrectPassword, UserDoesNotExist};
 use argon2::{
@@ -16,6 +17,7 @@ use diesel_async::{
     pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager},
     AsyncPgConnection, RunQueryDsl,
 };
+use futures::future::err;
 use log::error;
 use rand_core::OsRng;
 
@@ -28,7 +30,7 @@ pub struct Database {
 pub struct ResponseData {
     pub message: String,
     pub user: Option<User>,
-    pub data: Option<RegisterUserSchema>,
+    pub data: Option<RegisterUserSchemaRequest>,
 }
 
 #[derive(Debug)]
@@ -93,6 +95,8 @@ impl Database {
                 confirm_email_token,
                 confirmed_phone,
                 confirm_phone_token,
+                reset_password_token,
+                reset_password_tokenizer,
                 current_available_funds,
                 created_at,
                 updated_at,
@@ -109,12 +113,12 @@ impl Database {
         }
     }
 
-    async fn find_user_by_username_or_email_or_phone(
+    pub async fn find_user_by_username_or_email_or_phone(
         &self,
         user_name: &str,
         user_email: &str,
         user_phone: &str,
-    ) -> Result<Option<RegisterUserSchema>, AuthenticationError> {
+    ) -> Result<Option<RegisterUserSchemaRequest>, AuthenticationError> {
         let mut conn = self.get_db_conn().await?;
         let exists = users
             .filter(
@@ -124,7 +128,7 @@ impl Database {
                     .or(phone.eq(user_phone)),
             )
             .select((username, email, phone, password))
-            .first::<RegisterUserSchema>(&mut conn)
+            .first::<RegisterUserSchemaRequest>(&mut conn)
             .await
             .optional()
             .map_err(AuthenticationError::DatabaseError)?;
@@ -138,7 +142,7 @@ impl Database {
 
     pub async fn create_user(
         &self,
-        req_body: RegisterUserSchema,
+        req_body: RegisterUserSchemaRequest,
     ) -> Result<Option<ResponseData>, AuthenticationError> {
         //check if user already exist
         let user_phone = match req_body.phone {
@@ -221,7 +225,7 @@ impl Database {
 
     pub async fn verify_user_password(
         &self,
-        req_body: LoginUserSchema,
+        req_body: LoginUserSchemaRequest,
     ) -> Result<Option<ResponseData>, AuthenticationError> {
         let user_username = req_body.username.unwrap_or_else(|| "".to_owned());
         let user_email = req_body.email.unwrap_or_else(|| "".to_owned());
@@ -260,30 +264,17 @@ impl Database {
 
     pub async fn update_email_verification_things(
         &self,
-        mut data: User,
-        token: u32,
-        confirmed: bool,
-    ) -> Result<Option<User>, AuthenticationError> {
-        data.confirm_email_token = if token == 0 { None } else { Some(token as i32) };
-        data.confirmed_email = Some(confirmed);
+        data: UpdateEmailAttributes,
+        // token: u32,
+        // confirmed: bool,
+    ) -> Result<Option<ConfirmEmailResponse>, AuthenticationError> {
+        // data.confirm_email_token = if token == 0 { None } else { Some(token as i32) };
+        // data.confirmed_email = Some(confirmed);
         let mut conn = self.get_db_conn().await?;
         match diesel::update(users.filter(email.eq(&data.email)))
             .set(&data)
-            .returning((
-                uuid_id,
-                email,
-                username,
-                phone,
-                password,
-                confirmed_email,
-                confirm_email_token,
-                confirmed_phone,
-                confirm_phone_token,
-                current_available_funds,
-                created_at,
-                updated_at,
-            ))
-            .get_result::<User>(&mut conn)
+            .returning((uuid_id, email, username, reset_password_tokenizer))
+            .get_result::<ConfirmEmailResponse>(&mut conn)
             .await
         {
             Ok(user) => Ok(Some(user)),

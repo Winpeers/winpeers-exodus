@@ -1,3 +1,4 @@
+use diesel::Queryable;
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
@@ -8,12 +9,8 @@ pub struct FilteredUser {
     pub phone: Option<String>,
     #[serde(rename = "confirmedEmail")]
     pub confirmed_email: Option<bool>,
-    #[serde(rename = "confirmedEmailToken")]
-    pub confirmed_email_token: Option<i32>,
     #[serde(rename = "confirmedPhone")]
     pub confirmed_phone: Option<bool>,
-    #[serde(rename = "currentAvailableFunds")]
-    pub current_available_funds: i32,
     #[serde(rename = "createdAt")]
     pub created_at: Option<chrono::NaiveDateTime>,
     #[serde(rename = "updatedAt")]
@@ -29,4 +26,13 @@ pub struct UserData {
 pub struct UserResponse {
     pub status: String,
     pub data: UserData,
+}
+
+#[derive(Queryable, Default)]
+#[diesel(table_name = crate::models::schema::users)]
+pub struct ConfirmEmailResponse {
+    pub uuid_id: String,
+    pub email: String,
+    pub username: String,
+    pub reset_password_tokenizer: Option<String>,
 }

@@ -42,6 +42,8 @@ diesel::table! {
         confirm_email_token -> Nullable<Int4>,
         confirmed_phone -> Nullable<Bool>,
         confirm_phone_token -> Nullable<Int4>,
+        reset_password_token -> Nullable<Int4>,
+        reset_password_tokenizer -> Nullable<Varchar>,
         current_available_funds -> Int4,
         created_at -> Nullable<Timestamptz>,
         updated_at -> Nullable<Timestamptz>,

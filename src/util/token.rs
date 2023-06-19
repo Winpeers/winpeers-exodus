@@ -1,4 +1,4 @@
-use crate::model::token_claims::{TokenClaims, TokenDetails};
+use crate::models::token_claims::{TokenClaims, TokenDetails};
 use crate::util::token::TokenError::{TokenGenerationError, TokenValidationError};
 use base64::engine::general_purpose;
 use base64::Engine;

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Queryable, Insertable, AsChangeset, Default)]
-#[diesel(table_name = crate::model::schema::users)]
+#[diesel(table_name = crate::models::schema::users)]
 pub struct User {
     #[serde(default)]
     pub uuid_id: String,
@@ -19,6 +19,8 @@ pub struct User {
     pub confirm_email_token: Option<i32>,
     pub confirmed_phone: Option<bool>,
     pub confirm_phone_token: Option<i32>,
+    pub reset_password_token: Option<i32>,
+    pub reset_password_tokenizer: Option<String>,
     pub current_available_funds: i32,
     #[serde(rename = "createdAt")]
     pub created_at: Option<chrono::NaiveDateTime>,
@@ -33,7 +35,7 @@ lazy_static! {
     static ref TOKEN_MATCH_RE: Regex = Regex::new(r"^\d{6}$").unwrap();
 }
 #[derive(Debug, Deserialize, Queryable, Clone, Validate)]
-pub struct RegisterUserSchema {
+pub struct RegisterUserSchemaRequest {
     #[validate(regex(
         path = "USER_NAME_RE",
         message = "Username can be alphanumeric and must be longer than 5 characters"
@@ -55,7 +57,7 @@ pub struct RegisterUserSchema {
 }
 
 #[derive(Debug, Deserialize, Queryable, Validate)]
-pub struct LoginUserSchema {
+pub struct LoginUserSchemaRequest {
     #[validate(regex(
         path = "USER_NAME_RE",
         message = "Username can be alphanumeric and must be longer than 5 characters"
@@ -85,9 +87,32 @@ pub struct VerifyEmailRequest {
     pub token: String,
 }
 
-#[derive(Queryable)]
-#[diesel(table_name = crate::model::schema::users)]
-pub struct ConfirmEmailToken {
-    pub uuid_id: String,
+#[derive(Debug, Deserialize, Validate)]
+pub struct ForgotPasswordRequest {
+    #[validate(email(message = "Must be a valid email"))]
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct NewPasswordRequest {
+    #[validate(email(message = "Must be a valid email"))]
+    pub email: String,
+    #[validate(regex(
+        path = "PASSWORD_RE",
+        message = "Password must be between 6 and 25 characters long. \
+        It can only contain letters, numbers and the following special characters (@, $, !, %, *, ?, &)"
+    ))]
+    pub new_password: String,
+    pub tokenizer: String,
+}
+
+#[derive(Default, AsChangeset)]
+#[diesel(table_name = crate::models::schema::users)]
+pub struct UpdateEmailAttributes {
+    pub email: String,
     pub confirm_email_token: Option<i32>,
+    pub confirmed_email: Option<bool>,
+    pub reset_password_token: Option<i32>,
+    pub reset_password_tokenizer: Option<String>,
+    pub password: Option<String>,
 }

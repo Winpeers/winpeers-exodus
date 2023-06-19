@@ -11,7 +11,7 @@ use std::str::FromStr;
 
 mod config;
 mod controller;
-mod model;
+mod models;
 mod repository;
 mod service;
 mod util;

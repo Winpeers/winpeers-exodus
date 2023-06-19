@@ -1,4 +1,4 @@
-use crate::model::user::User;
+use crate::models::user::User;
 use crate::util::token;
 use crate::AppState;
 use actix_web::{dev::Payload, web, HttpResponse, ResponseError};
