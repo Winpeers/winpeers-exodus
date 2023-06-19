@@ -1,10 +1,13 @@
 use crate::config::jwt_auth::JwtMiddleware;
-use crate::model::user::LoginUserSchema;
+use crate::model::schema::users::{confirm_email_token, confirmed_phone};
+use crate::model::user::{LoginUserSchema, VerifyEmailRequest};
 use crate::model::{
     response::FilteredUser,
     user::{RegisterUserSchema, User},
 };
-use crate::repository::database::ResponseData;
+use crate::repository::database::{AuthenticationError, ResponseData};
+use crate::util::random_num_gen::generate_random_number;
+use crate::util::send_email::{send_email_verify_mail, send_welcome_email};
 use crate::util::token::{generate_jwt_token, verify_jwt_token};
 use crate::AppState;
 use actix_web::{
@@ -13,6 +16,7 @@ use actix_web::{
     web::{Data, Json},
     HttpRequest, HttpResponse, Responder,
 };
+use futures::future::err;
 use log::error;
 use serde_json::json;
 use validator::Validate;
@@ -24,6 +28,7 @@ fn filter_user_record(user: &User) -> FilteredUser {
         username: user.username.to_owned(),
         phone: user.phone.to_owned(),
         confirmed_email: user.confirmed_email,
+        confirmed_email_token: user.confirm_email_token,
         confirmed_phone: user.confirmed_phone,
         current_available_funds: user.current_available_funds.to_owned(),
         created_at: Some(user.created_at.unwrap()),
@@ -32,13 +37,13 @@ fn filter_user_record(user: &User) -> FilteredUser {
 }
 
 pub async fn create_user_service(
-    data: Data<AppState>,
+    data_b: Data<AppState>,
     new_user: Json<RegisterUserSchema>,
 ) -> impl Responder {
     let is_valid = new_user.validate();
     match is_valid {
         Ok(_) => {
-            let user_data = match data.db.create_user(new_user.into_inner()).await {
+            let user_data = match data_b.db.create_user(new_user.into_inner()).await {
                 Ok(response_data) => response_data,
                 Err(err) => {
                     error!("Returned no user information. Which would mean an issue occurred in creating the user. \
@@ -57,30 +62,58 @@ pub async fn create_user_service(
                 data: None,
             });
             match res_data.message.as_str() {
-                "Data Exists" => HttpResponse::Conflict().json(serde_json::json!({
+                "Data Exists" => HttpResponse::Conflict().json(json!({
                     "status": "failed",
                     "message": "User with that username/email/phone already exists"
                 })),
                 "Data Inserted" => match &res_data.user {
                     Some(data) => {
-                        let user_response = serde_json::json!({
-                            "status": "success",
-                            "data": {
-                                "user": filter_user_record(data)
+                        let random_number = generate_random_number().await;
+                        match data_b
+                            .db
+                            .update_email_verification_things(data.to_owned(), random_number, false)
+                            .await
+                        {
+                            Ok(user) => {
+                                let user_info = &user.unwrap_or_else(|| User {
+                                    ..Default::default()
+                                });
+                                match send_email_verify_mail(
+                                    &user_info.username,
+                                    &user_info.email,
+                                    random_number,
+                                )
+                                .await
+                                {
+                                    Ok(_) => {}
+                                    Err(_err) => {}
+                                }
+
+                                let user_response = json!({
+                                    "status": "success",
+                                    "data": {
+                                        "user": filter_user_record(user_info),
+                                    }
+                                });
+
+                                HttpResponse::Ok().json(user_response)
                             }
-                        });
-                        HttpResponse::Ok().json(user_response)
+                            Err(e) => {
+                                error!("An error occurred in create_user -> verify_email service. The error: {:?}", e);
+                                HttpResponse::BadRequest().json(json!({
+                                    "status": "failed",
+                                    "message": "An error occurred"
+                                }))
+                            }
+                        }
                     }
-                    None => HttpResponse::InternalServerError().json(
-                        serde_json::json!({"status": "failed","message": "An error occurred"}),
-                    ),
+                    None => HttpResponse::InternalServerError()
+                        .json(json!({"status": "failed","message": "An error occurred"})),
                 },
-                "User Failed to be Inserted" => {
-                    HttpResponse::InternalServerError().json(serde_json::json!({
-                        "status": "failed",
-                        "message": "An error occurred"
-                    }))
-                }
+                "User Failed to be Inserted" => HttpResponse::InternalServerError().json(json!({
+                    "status": "failed",
+                    "message": "An error occurred"
+                })),
                 _ => HttpResponse::InternalServerError().finish(),
             }
         }
@@ -214,14 +247,21 @@ pub async fn login_user_service(
 }
 
 pub async fn get_all_user_info_service(jwt_guard: JwtMiddleware) -> impl Responder {
-    let json_response = json!({
-        "status":  "success",
-        "data": serde_json::json!({
-            "user": filter_user_record(&jwt_guard.user)
-        })
-    });
+    if let Some(false) = jwt_guard.user.confirmed_email {
+        HttpResponse::ExpectationFailed().json(json!({
+            "status": "failed",
+            "message": "Verify you email address"
+        }))
+    } else {
+        let json_response = json!({
+            "status":  "success",
+            "data": serde_json::json!({
+                "user": filter_user_record(&jwt_guard.user)
+            })
+        });
 
-    HttpResponse::Ok().json(json_response)
+        HttpResponse::Ok().json(json_response)
+    }
 }
 
 pub async fn refresh_auth_token_service(req: HttpRequest, data: Data<AppState>) -> impl Responder {
@@ -437,5 +477,58 @@ pub async fn logout_user_service(
                 "message": "Graceful Logout failed"
             }))
         }
+    }
+}
+
+pub async fn verify_email(
+    verify_email_req: Json<VerifyEmailRequest>,
+    jwt_guard: JwtMiddleware,
+    data: Data<AppState>,
+) -> impl Responder {
+    let is_valid = verify_email_req.validate();
+    match is_valid {
+        Ok(_) => {
+            if let Some(false) = jwt_guard.user.confirmed_email {
+                let tok = verify_email_req.into_inner().token;
+                let user = jwt_guard.user;
+                if user
+                    .confirm_email_token
+                    .eq(&Some(tok.as_str().parse::<i32>().unwrap()))
+                {
+                    match data
+                        .db
+                        .update_email_verification_things(user, 0, true)
+                        .await
+                    {
+                        Ok(user) => {
+                            let user_info = &user.unwrap_or_else(|| User {
+                                ..Default::default()
+                            });
+                            match send_welcome_email(&user_info.username, &user_info.email).await {
+                                Ok(_) => {}
+                                Err(_err) => {}
+                            }
+
+                            HttpResponse::Ok().json(json!({
+                                "status": "success",
+                                "message": "Email verified successfully"
+                            }))
+                        }
+                        Err(e) => {
+                            error!("An error occurred. The error: {:?}", e);
+                            HttpResponse::BadRequest().json(json!({
+                                "status": "failed",
+                                "message": "Email verification failed"
+                            }))
+                        }
+                    }
+                } else {
+                    HttpResponse::Forbidden().finish()
+                }
+            } else {
+                HttpResponse::Forbidden().finish()
+            }
+        }
+        Err(err) => HttpResponse::BadRequest().json(err),
     }
 }

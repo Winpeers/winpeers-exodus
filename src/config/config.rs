@@ -11,17 +11,17 @@ pub struct Config {
 
     pub jwt_secret: String,
     pub jwt_expires_in: String,
-    pub jwt_max_age: i32,
+    pub jwt_max_age: u32,
 
     pub access_token_private_key: String,
     pub access_token_public_key: String,
     pub access_token_expires_in: String,
-    pub access_token_max_age: i32,
+    pub access_token_max_age: u32,
 
     pub refresh_token_private_key: String,
     pub refresh_token_public_key: String,
     pub refresh_token_expires_in: String,
-    pub refresh_token_max_age: i32,
+    pub refresh_token_max_age: u32,
 }
 
 impl Config {
@@ -48,8 +48,8 @@ impl Config {
             3600 // Default value of 3600 if environment variable is not set
         } else {
             jwt_max_age
-                .parse::<i32>()
-                .expect("Failed to parse JWT_MAX_AGE as i32")
+                .parse::<u32>()
+                .expect("Failed to parse JWT_MAX_AGE as u32")
         };
 
         Config {
@@ -64,8 +64,8 @@ impl Config {
             refresh_token_public_key,
             access_token_expires_in,
             refresh_token_expires_in,
-            access_token_max_age: access_token_max_age.parse::<i32>().unwrap(),
-            refresh_token_max_age: refresh_token_max_age.parse::<i32>().unwrap(),
+            access_token_max_age: access_token_max_age.parse::<u32>().unwrap(),
+            refresh_token_max_age: refresh_token_max_age.parse::<u32>().unwrap(),
         }
     }
 }

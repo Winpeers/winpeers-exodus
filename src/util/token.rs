@@ -24,7 +24,7 @@ pub enum TokenError {
 
 pub fn generate_jwt_token(
     user_email: String,
-    ttl: i32,
+    ttl: u32,
     private_key: String,
 ) -> Result<TokenDetails> {
     let bytes_private_key = general_purpose::STANDARD.decode(private_key).unwrap();

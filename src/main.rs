@@ -5,6 +5,7 @@ use crate::util::real_ip_key_extractor::RealIpKeyExtractor;
 use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder, Result};
 use serde::Serialize;
+use std::default::Default;
 use std::net::IpAddr;
 use std::str::FromStr;
 

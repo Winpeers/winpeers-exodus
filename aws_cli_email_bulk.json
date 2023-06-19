@@ -1,0 +1,32 @@
+{
+  "Source":"Winpeers <winpeershq@gmail.com>",
+  "Template":"Winpeers_Welcome_Email_Template",
+  "ConfigurationSetName": "",
+  "Destinations":[
+    {
+      "Destination":{
+        "ToAddresses":[
+          "cierisdesantus@gmail.com"
+        ]
+      },
+      "ReplacementTemplateData":"{ \"firstname\":\"Santus\" }"
+    },
+    {
+      "Destination":{
+        "ToAddresses":[
+          "nwachukwu.favour017@gmail.com"
+        ]
+      },
+      "ReplacementTemplateData":"{ \"firstname\":\"Favour\" }"
+    },
+    {
+      "Destination":{
+        "ToAddresses":[
+          "samuelstone750@gmail.com"
+        ]
+      },
+      "ReplacementTemplateData":"{ \"firstname\":\"Dozie\" }"
+    }
+  ],
+  "DefaultTemplateData":"{ \"firstname\":\"friend\" }"
+}

@@ -1,11 +1,11 @@
 use crate::config::jwt_auth::JwtMiddleware;
-use crate::model::user::{LoginUserSchema, RegisterUserSchema};
+use crate::model::user::{LoginUserSchema, RegisterUserSchema, VerifyEmailRequest};
 use crate::service::user::{
     create_user_service, get_all_user_info_service, login_user_service, logout_user_service,
-    refresh_auth_token_service,
+    refresh_auth_token_service, verify_email,
 };
 use crate::AppState;
-use actix_web::web::{Data, Json};
+use actix_web::web::{service, Data, Json};
 use actix_web::{get, post, web, HttpRequest, Responder};
 
 #[post("/auth/register")]
@@ -39,8 +39,17 @@ async fn get_user_info_handler(auth: JwtMiddleware) -> impl Responder {
 }
 
 #[get("/auth/refresh")]
-async fn refresh_auth_handler(req: HttpRequest, data: web::Data<AppState>) -> impl Responder {
+async fn refresh_auth_handler(req: HttpRequest, data: Data<AppState>) -> impl Responder {
     refresh_auth_token_service(req, data).await
+}
+
+#[post("/user/verify-email")]
+async fn verify_email_handler(
+    verify_email_req: Json<VerifyEmailRequest>,
+    jwt_guard: JwtMiddleware,
+    data: Data<AppState>,
+) -> impl Responder {
+    verify_email(verify_email_req, jwt_guard, data).await
 }
 
 pub fn config(conf: &mut web::ServiceConfig) {
@@ -49,7 +58,8 @@ pub fn config(conf: &mut web::ServiceConfig) {
         .service(register_user_handler)
         .service(login_user_handler)
         .service(logout_user_handler)
-        .service(refresh_auth_handler);
+        .service(refresh_auth_handler)
+        .service(verify_email_handler);
 
     conf.service(scope);
 }

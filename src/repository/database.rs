@@ -1,17 +1,17 @@
 use crate::config::config::Config;
-use crate::model::user::LoginUserSchema;
+use crate::model::user::{ConfirmEmailToken, LoginUserSchema};
 use crate::model::{
     schema::users::dsl::*,
     user::{RegisterUserSchema, User},
 };
-use crate::repository::database::AuthenticationError::IncorrectPassword;
+use crate::repository::database::AuthenticationError::{IncorrectPassword, UserDoesNotExist};
 use argon2::{
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
 use chrono::Utc;
 use deadpool::managed::Object;
-use diesel::{BoolExpressionMethods, ExpressionMethods, OptionalExtension, QueryDsl};
+use diesel::{BoolExpressionMethods, ExpressionMethods, OptionalExtension, QueryDsl, Table};
 use diesel_async::{
     pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager},
     AsyncPgConnection, RunQueryDsl,
@@ -33,11 +33,12 @@ pub struct ResponseData {
 
 #[derive(Debug)]
 pub enum AuthenticationError {
+    DBConnectionError,
     IncorrectPassword,
+    UserDoesNotExist,
     Argon2Error(argon2::password_hash::Error),
     DatabaseError(diesel::result::Error),
     AsyncDatabaseError(diesel_async::pooled_connection::deadpool::PoolError),
-    DBConnectionError,
 }
 
 impl From<argon2::password_hash::Error> for AuthenticationError {
@@ -54,6 +55,26 @@ impl Database {
             .expect("Failed to create pool.");
         Database { pool }
     }
+
+    // pub async fn find_user_confirm_email_token(
+    //     &self,
+    //     user_email: &str,
+    // ) -> Result<Option<ConfirmEmailToken>, AuthenticationError> {
+    //     let mut conn = self.get_db_conn().await?;
+    //     let data = users
+    //         .filter(email.eq(user_email))
+    //         .select((uuid_id, confirm_email_token))
+    //         .first::<ConfirmEmailToken>(&mut conn)
+    //         .await
+    //         .optional()
+    //         .map_err(AuthenticationError::DatabaseError)?;
+    //
+    //     if let Some(confirm_token) = data {
+    //         Ok(Some(confirm_token))
+    //     } else {
+    //         Ok(None)
+    //     }
+    // }
 
     pub async fn find_all_user_info(
         &self,
@@ -152,13 +173,10 @@ impl Database {
                     username: req_body.username.to_string(),
                     phone: Some(user_phone),
                     password: hashed_password,
-                    confirmed_email: None,
-                    confirm_email_token: None,
-                    confirmed_phone: None,
-                    confirm_phone_token: None,
                     current_available_funds: 0,
                     created_at: Some(Utc::now().naive_utc()),
                     updated_at: Some(Utc::now().naive_utc()),
+                    ..Default::default()
                 };
 
                 match diesel::insert_into(users)
@@ -236,6 +254,45 @@ impl Database {
             Err(err) => {
                 error!("An error occurred in the while trying to verify user password. Couldn't acquire db connection. The verify_user_password function. The error: {:?}", err);
                 Err(AuthenticationError::DBConnectionError)
+            }
+        }
+    }
+
+    pub async fn update_email_verification_things(
+        &self,
+        mut data: User,
+        token: u32,
+        confirmed: bool,
+    ) -> Result<Option<User>, AuthenticationError> {
+        data.confirm_email_token = if token == 0 { None } else { Some(token as i32) };
+        data.confirmed_email = Some(confirmed);
+        let mut conn = self.get_db_conn().await?;
+        match diesel::update(users.filter(email.eq(&data.email)))
+            .set(&data)
+            .returning((
+                uuid_id,
+                email,
+                username,
+                phone,
+                password,
+                confirmed_email,
+                confirm_email_token,
+                confirmed_phone,
+                confirm_phone_token,
+                current_available_funds,
+                created_at,
+                updated_at,
+            ))
+            .get_result::<User>(&mut conn)
+            .await
+        {
+            Ok(user) => Ok(Some(user)),
+            Err(err) => {
+                error!(
+                    "An error occurred in the update_email_verification_token function. The error: {}",
+                    err.to_string()
+                );
+                Err(UserDoesNotExist)
             }
         }
     }

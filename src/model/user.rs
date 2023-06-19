@@ -1,10 +1,12 @@
+use diesel::backend::Backend;
+use diesel::sql_types::Nullable;
 use diesel::{AsChangeset, Insertable, Queryable};
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-#[derive(Serialize, Deserialize, Debug, Clone, Queryable, Insertable, AsChangeset)]
+#[derive(Serialize, Deserialize, Debug, Clone, Queryable, Insertable, AsChangeset, Default)]
 #[diesel(table_name = crate::model::schema::users)]
 pub struct User {
     #[serde(default)]
@@ -27,7 +29,8 @@ pub struct User {
 lazy_static! {
     static ref USER_NAME_RE: Regex = Regex::new(r"^[a-zA-Z0-9]{5,}$").unwrap();
     static ref PASSWORD_RE: Regex = Regex::new(r"^[A-Za-z\d@$!%*?&]{6,}$").unwrap();
-    static ref NUMBER_MATCH_RE: Regex = Regex::new(r"^\d{9,}$").unwrap();
+    static ref PHONE_NUMBER_MATCH_RE: Regex = Regex::new(r"^\d{9,}$").unwrap();
+    static ref TOKEN_MATCH_RE: Regex = Regex::new(r"^\d{6}$").unwrap();
 }
 #[derive(Debug, Deserialize, Queryable, Clone, Validate)]
 pub struct RegisterUserSchema {
@@ -39,7 +42,7 @@ pub struct RegisterUserSchema {
     #[validate(email(message = "Must be a valid email"))]
     pub email: String,
     #[validate(regex(
-        path = "NUMBER_MATCH_RE",
+        path = "PHONE_NUMBER_MATCH_RE",
         message = "Phone must be a number and must be longer than 9 characters"
     ))]
     pub phone: Option<String>,
@@ -61,7 +64,7 @@ pub struct LoginUserSchema {
     #[validate(email(message = "Must be a valid email"))]
     pub email: Option<String>,
     #[validate(regex(
-        path = "NUMBER_MATCH_RE",
+        path = "PHONE_NUMBER_MATCH_RE",
         message = "Phone must be a number and must be longer than 9 characters"
     ))]
     pub phone: Option<String>,
@@ -71,4 +74,20 @@ pub struct LoginUserSchema {
         It can only contain letters, numbers and the following special characters (@, $, !, %, *, ?, &)"
     ))]
     pub password: String,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct VerifyEmailRequest {
+    #[validate(regex(
+        path = "TOKEN_MATCH_RE",
+        message = "token must be a number and must be 6 characters long"
+    ))]
+    pub token: String,
+}
+
+#[derive(Queryable)]
+#[diesel(table_name = crate::model::schema::users)]
+pub struct ConfirmEmailToken {
+    pub uuid_id: String,
+    pub confirm_email_token: Option<i32>,
 }

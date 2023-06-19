@@ -1,0 +1,10 @@
+{
+  "Source":"Winpeers <winpeershq@gmail.com>",
+  "Template": "Winpeers_Welcome_Email_Template",
+  "ConfigurationSetName": "",
+  "Destination": {
+    "ToAddresses": [ "nwachukwufavour017@gmail.com"
+    ]
+  },
+  "TemplateData": "{ \"firstname\":\"Favour\" }"
+}

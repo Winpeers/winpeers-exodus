@@ -18,15 +18,21 @@ diesel = { version = "2.0.4", features = ["postgres", "r2d2", "chrono", "uuid"] 
 diesel-async = { version ="0.3.0", features = ["postgres", "deadpool", "tokio"] }
 dotenv = "0.15.0"
 futures = "0.3.28"
+getrandom = "0.2.10"
 jsonwebtoken = "8.3.0"
 lazy_static = "1.4.0"
 log = "0.4.18"
 log4rs = "1.2.0"
 mobc = "0.8.1"
 mobc-redis = "0.8.0"
+rand = "0.8.5"
 rand_core = { version = "0.6.4", features = ["std"] }
 redis = { version = "0.23.0", features = ["tokio-comp"] }
 regex = "1.8.4"
+reqwest = { version = "0.11.18", features = ["json"] }
+rusoto_core = "0.48.0"
+rusoto_ses = "0.48.0"
+rustls = "0.21.2"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
 thiserror = "1.0.40"
