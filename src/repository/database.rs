@@ -117,7 +117,7 @@ impl Database {
         &self,
         user_name: &str,
         user_email: &str,
-        user_phone: &str,
+        user_phone: Option<&str>,
     ) -> Result<Option<RegisterUserSchemaRequest>, AuthenticationError> {
         let mut conn = self.get_db_conn().await?;
         let exists = users
@@ -127,7 +127,7 @@ impl Database {
                     .or(email.eq(user_email))
                     .or(phone.eq(user_phone)),
             )
-            .select((username, email, phone, password))
+            .select((username, email, password))
             .first::<RegisterUserSchemaRequest>(&mut conn)
             .await
             .optional()
@@ -145,16 +145,9 @@ impl Database {
         req_body: RegisterUserSchemaRequest,
     ) -> Result<Option<ResponseData>, AuthenticationError> {
         //check if user already exist
-        let user_phone = match req_body.phone {
-            Some(user_phone) => user_phone,
-            _ => "".to_owned(),
-        };
+
         let user_exists = self
-            .find_user_by_username_or_email_or_phone(
-                &req_body.username,
-                &req_body.email,
-                &user_phone,
-            )
+            .find_user_by_username_or_email_or_phone(&req_body.username, &req_body.email, None)
             .await;
 
         let mut conn = self.get_db_conn().await?;
@@ -175,7 +168,7 @@ impl Database {
                     uuid_id: uuid::Uuid::new_v4().to_string(),
                     email: req_body.email.to_string(),
                     username: req_body.username.to_string(),
-                    phone: Some(user_phone),
+                    // phone: Some(user_phone),
                     password: hashed_password,
                     current_available_funds: 0,
                     created_at: Some(Utc::now().naive_utc()),
@@ -230,9 +223,19 @@ impl Database {
         let user_username = req_body.username.unwrap_or_else(|| "".to_owned());
         let user_email = req_body.email.unwrap_or_else(|| "".to_owned());
         let user_phone = req_body.phone.unwrap_or_else(|| "".to_owned());
+        let user_phone_opt: Option<&str> = if !user_phone.is_empty() {
+            Some(&user_phone)
+        } else {
+            None
+        };
+        // let user_phone_clone = user_phone.clone();
+        // let mut user_phone_opt = None;
+        // if !user_phone.is_empty() {
+        //     user_phone_opt = Some(user_phone_clone).as_deref()
+        // }
 
         let check_if_user_exist = self
-            .find_user_by_username_or_email_or_phone(&user_username, &user_email, &user_phone)
+            .find_user_by_username_or_email_or_phone(&user_username, &user_email, user_phone_opt)
             .await;
 
         match check_if_user_exist {

@@ -23,6 +23,7 @@ use actix_web::{
 };
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher, PasswordVerifier};
+use chrono::Utc;
 use log::error;
 use rand_core::OsRng;
 use serde_json::json;
@@ -80,6 +81,7 @@ pub async fn create_user_service(
                             email: data_clone.email,
                             confirm_email_token: Some(random_number as i32),
                             confirmed_email: Some(false),
+                            updated_at: Some(Utc::now().naive_utc()),
                             ..Default::default()
                         };
                         match data_b
@@ -514,6 +516,7 @@ pub async fn verify_email(
                         email: user.email,
                         confirm_email_token: None,
                         confirmed_email: Some(true),
+                        updated_at: Some(Utc::now().naive_utc()),
                         ..Default::default()
                     };
                     match data.db.update_email_verification_things(updated_user).await {
@@ -561,7 +564,7 @@ pub async fn reset_password_service(
             let reset_password_email = reset_pass_req.into_inner().email;
             match data
                 .db
-                .find_user_by_username_or_email_or_phone("", &reset_password_email, "")
+                .find_user_by_username_or_email_or_phone("", &reset_password_email, None)
                 .await
             {
                 Ok(Some(user_info)) => {
@@ -571,6 +574,7 @@ pub async fn reset_password_service(
                         email: user_info.email,
                         reset_password_token: Some(random_number as i32),
                         reset_password_tokenizer: Some(tokenizer.clone()),
+                        updated_at: Some(Utc::now().naive_utc()),
                         ..Default::default()
                     };
                     match data.db.update_email_verification_things(updated_user).await {
@@ -638,6 +642,7 @@ pub async fn set_new_password_service(
             let updated_user = UpdateEmailAttributes {
                 email,
                 password: Some(hashed_password),
+                updated_at: Some(Utc::now().naive_utc()),
                 ..Default::default()
             };
             match data.db.update_email_verification_things(updated_user).await {

@@ -44,11 +44,6 @@ pub struct RegisterUserSchemaRequest {
     #[validate(email(message = "Must be a valid email"))]
     pub email: String,
     #[validate(regex(
-        path = "PHONE_NUMBER_MATCH_RE",
-        message = "Phone must be a number and must be longer than 9 characters"
-    ))]
-    pub phone: Option<String>,
-    #[validate(regex(
         path = "PASSWORD_RE",
         message = "Password must be between 6 and 25 characters long. \
         It can only contain letters, numbers and the following special characters (@, $, !, %, *, ?, &)"
@@ -115,4 +110,5 @@ pub struct UpdateEmailAttributes {
     pub reset_password_token: Option<i32>,
     pub reset_password_tokenizer: Option<String>,
     pub password: Option<String>,
+    pub updated_at: Option<chrono::NaiveDateTime>,
 }
