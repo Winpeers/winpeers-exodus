@@ -1,11 +1,12 @@
 use crate::config::jwt_auth::JwtMiddleware;
 use crate::models::user::{
     ForgotPasswordRequest, LoginUserSchemaRequest, NewPasswordRequest, RegisterUserSchemaRequest,
-    VerifyEmailRequest,
+    ResetPasswordTokenVerifyRequest, VerifyEmailRequest,
 };
 use crate::service::user::{
     create_user_service, get_all_user_info_service, login_user_service, logout_user_service,
     refresh_auth_token_service, reset_password_service, set_new_password_service, verify_email,
+    verify_password_reset_token,
 };
 use crate::AppState;
 use actix_web::web::{service, Data, Json};
@@ -55,6 +56,14 @@ async fn verify_email_handler(
     verify_email(verify_email_req, jwt_guard, data).await
 }
 
+#[post("/user/verify-reset-password-token")]
+async fn verify_reset_password_token_handler(
+    verify_password_reset_token_req: Json<ResetPasswordTokenVerifyRequest>,
+    data: Data<AppState>,
+) -> impl Responder {
+    verify_password_reset_token(verify_password_reset_token_req, data).await
+}
+
 #[post("/user/request-password-change")]
 async fn send_password_reset_mail_handler(
     reset_pass_req: Json<ForgotPasswordRequest>,
@@ -80,7 +89,8 @@ pub fn config(conf: &mut web::ServiceConfig) {
         .service(refresh_auth_handler)
         .service(verify_email_handler)
         .service(send_password_reset_mail_handler)
-        .service(set_new_password_handler);
+        .service(set_new_password_handler)
+        .service(verify_reset_password_token_handler);
 
     conf.service(scope);
 }

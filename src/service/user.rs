@@ -1,8 +1,8 @@
 use crate::config::jwt_auth::JwtMiddleware;
 use crate::models::response::ConfirmEmailResponse;
 use crate::models::user::{
-    ForgotPasswordRequest, LoginUserSchemaRequest, NewPasswordRequest, UpdateEmailAttributes,
-    VerifyEmailRequest,
+    ForgotPasswordRequest, LoginUserSchemaRequest, NewPasswordRequest,
+    ResetPasswordTokenVerifyRequest, UpdateEmailAttributes, VerifyEmailRequest,
 };
 use crate::models::{
     response::FilteredUser,
@@ -24,6 +24,8 @@ use actix_web::{
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher, PasswordVerifier};
 use chrono::Utc;
+use futures::future::err;
+use futures::TryFutureExt;
 use log::error;
 use rand_core::OsRng;
 use serde_json::json;
@@ -554,6 +556,50 @@ pub async fn verify_email(
     }
 }
 
+pub async fn verify_password_reset_token(
+    verify_password_reset_token_req: Json<ResetPasswordTokenVerifyRequest>,
+    data: Data<AppState>,
+) -> impl Responder {
+    let is_valid = verify_password_reset_token_req.validate();
+    match is_valid {
+        Ok(_) => {
+            let req = verify_password_reset_token_req.into_inner();
+            let email = req.email;
+            let token = req.token;
+            match data.db.find_all_user_info(&email).await {
+                Ok(Some(user)) => {
+                    if user
+                        .reset_password_token
+                        .eq(&Some(token.as_str().parse::<i32>().unwrap()))
+                    {
+                        HttpResponse::Ok().json(json!({
+                            "status": "success",
+                            "message": "Password reset token verified successfully"
+                        }))
+                    } else {
+                        HttpResponse::BadRequest().json(json!({
+                            "status": "failed",
+                            "message": "Reset password token verification failed"
+                        }))
+                    }
+                }
+                Ok(None) => HttpResponse::BadRequest().json(json!({
+                    "status": "failed",
+                    "message": "Reset password token verification failed"
+                })),
+                Err(e) => {
+                    error!("An error occurred. The error: {:?}", e);
+                    HttpResponse::BadRequest().json(json!({
+                        "status": "failed",
+                        "message": "Reset password token verification failed"
+                    }))
+                }
+            }
+        }
+        Err(err) => HttpResponse::BadRequest().json(err),
+    }
+}
+
 pub async fn reset_password_service(
     reset_pass_req: Json<ForgotPasswordRequest>,
     data: Data<AppState>,
@@ -677,6 +723,4 @@ pub async fn set_new_password_service(
         }
         Err(err) => HttpResponse::BadRequest().json(err),
     }
-
-    // HttpResponse::Ok().finish()
 }

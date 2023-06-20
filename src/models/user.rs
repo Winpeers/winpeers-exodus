@@ -74,6 +74,17 @@ pub struct LoginUserSchemaRequest {
 }
 
 #[derive(Debug, Deserialize, Validate)]
+pub struct ResetPasswordTokenVerifyRequest {
+    #[validate(email(message = "Must be a valid email"))]
+    pub email: String,
+    #[validate(regex(
+        path = "TOKEN_MATCH_RE",
+        message = "token must be a number and must be 6 characters long"
+    ))]
+    pub token: String,
+}
+
+#[derive(Debug, Deserialize, Validate)]
 pub struct VerifyEmailRequest {
     #[validate(regex(
         path = "TOKEN_MATCH_RE",
