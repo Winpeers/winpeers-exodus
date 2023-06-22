@@ -37,7 +37,7 @@ async fn logout_user_handler(
     logout_user_service(req, auth_guard, data).await
 }
 
-#[get("/users/me")]
+#[get("/user/profile")]
 async fn get_user_info_handler(auth: JwtMiddleware) -> impl Responder {
     get_all_user_info_service(auth).await
 }

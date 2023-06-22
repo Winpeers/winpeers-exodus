@@ -115,7 +115,7 @@ pub async fn create_user_service(
                                     }
                                 });
 
-                                HttpResponse::Ok().json(user_response)
+                                HttpResponse::Created().json(user_response)
                             }
                             Err(e) => {
                                 error!("An error occurred in create_user -> verify_email service. The error: {:?}", e);
@@ -156,8 +156,8 @@ pub async fn login_user_service(
                     ) {
                         Ok(token_details) => token_details,
                         Err(e) => {
-                            error!("An error has occurred. Error: {:?}", e);
-                            return HttpResponse::BadGateway().json(
+                            error!("An error has occurred. While generating access_token. The Error: {:?}", e);
+                            return HttpResponse::InternalServerError().json(
                                 json!({"status": "failed", "message": "An error has occurred"}),
                             );
                         }
@@ -170,8 +170,11 @@ pub async fn login_user_service(
                     ) {
                         Ok(token_details) => token_details,
                         Err(e) => {
-                            error!("An error has occurred. Error: {:?}", e);
-                            return HttpResponse::BadGateway()
+                            error!(
+                                "An error has occurred. While generating access_token. Error: {:?}",
+                                e
+                            );
+                            return HttpResponse::InternalServerError()
                                     .json(serde_json::json!({"status": "failed", "message": "An error has occurred"}));
                         }
                     };
@@ -185,8 +188,9 @@ pub async fn login_user_service(
                         )
                         .await;
                     if let Err(e) = access_result {
+                        error!("An error has occurred. While reading access_result from redis. Error: {:?}", e);
                         return HttpResponse::UnprocessableEntity()
-                            .json(json!({"status": "error", "message": format_args!("{}", e)}));
+                            .json(json!({"status": "error", "message": "An error has occurred"}));
                     }
 
                     let refresh_result = data
@@ -199,8 +203,9 @@ pub async fn login_user_service(
                         .await;
 
                     if let Err(e) = refresh_result {
+                        error!("An error has occurred. While reading refresh_result from redis. Error: {:?}", e);
                         return HttpResponse::UnprocessableEntity()
-                            .json(json!({"status": "error", "message": format_args!("{}", e)}));
+                            .json(json!({"status": "error", "message": "An error has occurred"}));
                     }
 
                     let access_cookie =
@@ -246,18 +251,18 @@ pub async fn login_user_service(
                     "message": "Invalid email or password or phone"
                 })),
             },
-            Ok(None) => HttpResponse::BadRequest().json(json!({
+            Ok(None) => HttpResponse::InternalServerError().json(json!({
                 "status": "failed",
-                "message": "Invalid email or password or phone"
+                "message": "An error occurred"
             })),
             Err(auth_error) => {
                 error!(
                     "An error occurred in the login_user_service function. The error: {:?}",
                     auth_error
                 );
-                HttpResponse::BadRequest().json(json!({
+                HttpResponse::InternalServerError().json(json!({
                     "status": "failed",
-                    "message": "Incorrect email or password or phone"
+                    "message": "An error occurred"
                 }))
             }
         },
@@ -334,7 +339,7 @@ pub async fn refresh_auth_token_service(req: HttpRequest, data: Data<AppState>) 
     {
         Ok(val) => val,
         Err(_) => {
-            return HttpResponse::Forbidden().json(serde_json::json!({
+            return HttpResponse::UnprocessableEntity().json(serde_json::json!({
                 "status": "failed",
                 "message": message
             }))
@@ -344,13 +349,13 @@ pub async fn refresh_auth_token_service(req: HttpRequest, data: Data<AppState>) 
     let user = match data.db.find_all_user_info(&user_email).await {
         Ok(Some(user)) => user,
         Ok(None) => {
-            return HttpResponse::Forbidden().json(serde_json::json!({
+            return HttpResponse::InternalServerError().json(serde_json::json!({
                 "status":"failed",
                 "message": message
             }));
         }
         Err(_) => {
-            return HttpResponse::Forbidden().json(serde_json::json!({
+            return HttpResponse::InternalServerError().json(serde_json::json!({
                 "status":"failed",
                 "message": message
             }));
@@ -365,7 +370,7 @@ pub async fn refresh_auth_token_service(req: HttpRequest, data: Data<AppState>) 
         Ok(token_details) => token_details,
         Err(e) => {
             error!("An error occurred. The error: {:?}", e);
-            return HttpResponse::BadGateway().json(serde_json::json!({
+            return HttpResponse::InternalServerError().json(serde_json::json!({
                 "status": "failed",
                 "message": "An error occurred. Access token generation failed"
             }));
@@ -381,7 +386,7 @@ pub async fn refresh_auth_token_service(req: HttpRequest, data: Data<AppState>) 
         )
         .await;
     if let Err(e) = access_result {
-        return HttpResponse::UnprocessableEntity()
+        return HttpResponse::BadGateway()
             .json(json!({"status": "error", "message": format_args!("{}", e)}));
     }
 
@@ -706,7 +711,7 @@ pub async fn set_new_password_service(
                             "message": "New password set successfully"
                         }))
                     } else {
-                        HttpResponse::ExpectationFailed().json(json!({
+                        HttpResponse::BadRequest().json(json!({
                             "status": "failed",
                             "message": ""
                         }))
