@@ -21,16 +21,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    todos (id) {
-        id -> Varchar,
-        title -> Varchar,
-        description -> Nullable<Text>,
-        created_at -> Nullable<Timestamp>,
-        updated_at -> Nullable<Timestamp>,
-    }
-}
-
-diesel::table! {
     users (id) {
         id -> Int4,
         uuid_id -> Varchar,
@@ -52,6 +42,5 @@ diesel::table! {
 
 diesel::allow_tables_to_appear_in_same_query!(
     fantasy_contest,
-    todos,
     users,
 );
