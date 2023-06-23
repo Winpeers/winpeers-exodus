@@ -14,7 +14,7 @@ cargo-watch = "8.4.0"
 chrono = { version = "0.4.24", features = ["serde"] }
 deadpool = "0.9.5"
 deadpool-redis = { version = "0.12.0", features = ["serde"] }
-diesel = { version = "2.0.4", features = ["postgres", "r2d2", "chrono", "uuid"] }
+diesel = { version = "2.0.4", features = ["postgres", "r2d2", "chrono", "uuid", "64-column-tables"] }
 diesel-async = { version ="0.3.0", features = ["postgres", "deadpool", "tokio"] }
 dotenv = "0.15.0"
 futures = "0.3.28"
