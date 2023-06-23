@@ -1,5 +1,3 @@
-use diesel::backend::Backend;
-use diesel::sql_types::Nullable;
 use diesel::{AsChangeset, Insertable, Queryable};
 use lazy_static::lazy_static;
 use regex::Regex;

@@ -9,7 +9,7 @@ use crate::service::user::{
     verify_password_reset_token,
 };
 use crate::AppState;
-use actix_web::web::{service, Data, Json};
+use actix_web::web::{Data, Json};
 use actix_web::{get, post, web, HttpRequest, Responder};
 
 #[post("/auth/register")]

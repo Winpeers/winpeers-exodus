@@ -1,5 +1,3 @@
-use crate::util::random_num_or_string_gen::generate_random_number;
-use actix_web::web::to;
 use lazy_static::lazy_static;
 use rusoto_ses::{Destination, SendTemplatedEmailRequest, Ses, SesClient};
 use std::error::Error;

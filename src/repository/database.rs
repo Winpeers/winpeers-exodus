@@ -12,12 +12,11 @@ use argon2::{
 };
 use chrono::Utc;
 use deadpool::managed::Object;
-use diesel::{BoolExpressionMethods, ExpressionMethods, OptionalExtension, QueryDsl, Table};
+use diesel::{BoolExpressionMethods, ExpressionMethods, OptionalExtension, QueryDsl};
 use diesel_async::{
     pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager},
     AsyncPgConnection, RunQueryDsl,
 };
-use futures::future::err;
 use log::error;
 use rand_core::OsRng;
 

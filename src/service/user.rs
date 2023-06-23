@@ -22,10 +22,8 @@ use actix_web::{
     HttpRequest, HttpResponse, Responder,
 };
 use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHasher, PasswordVerifier};
+use argon2::{Argon2, PasswordHasher};
 use chrono::Utc;
-use futures::future::err;
-use futures::TryFutureExt;
 use log::error;
 use rand_core::OsRng;
 use serde_json::json;
