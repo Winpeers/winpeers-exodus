@@ -3,7 +3,7 @@ Description=My Rust Server For Winpeers
 After=multi-user.target
 
 [Service]
-ExecStart=/usr/bin/bash -c 'sudo apt-get install libpq-dev && /home/ubuntu/.cargo/bin/cargo build --release && /home/ubuntu/.cargo/bin/cargo install diesel_cli --no-default-features --features "postgres" && /home/ubuntu/.cargo/bin/diesel database setup && /home/ubuntu/.cargo/bin/cargo run --release'
+ExecStart=/usr/bin/bash -c '/home/ubuntu/.cargo/bin/cargo build --release && /home/ubuntu/.cargo/bin/diesel migration run && /home/ubuntu/.cargo/bin/cargo run --release'
 Restart=always
 RestartSec=10
 StandardOutput=syslog

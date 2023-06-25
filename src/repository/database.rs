@@ -12,12 +12,17 @@ use argon2::{
 };
 use chrono::Utc;
 use deadpool::managed::Object;
-use diesel::{BoolExpressionMethods, ExpressionMethods, OptionalExtension, QueryDsl};
+use diesel::{
+    BoolExpressionMethods, ConnectionError, ConnectionResult, ExpressionMethods, OptionalExtension,
+    QueryDsl,
+};
 use diesel_async::{
     pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager},
     AsyncPgConnection, RunQueryDsl,
 };
 use log::error;
+use openssl::ssl::{SslConnector, SslMethod};
+use postgres_openssl::MakeTlsConnector;
 use rand_core::OsRng;
 
 pub type DBPool = deadpool::managed::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>;
@@ -34,12 +39,12 @@ pub struct ResponseData {
 
 #[derive(Debug)]
 pub enum AuthenticationError {
+    Argon2Error(argon2::password_hash::Error),
+    AsyncDatabaseError(diesel_async::pooled_connection::deadpool::PoolError),
+    DatabaseError(diesel::result::Error),
     DBConnectionError,
     IncorrectPassword,
     UserDoesNotExist,
-    Argon2Error(argon2::password_hash::Error),
-    DatabaseError(diesel::result::Error),
-    AsyncDatabaseError(diesel_async::pooled_connection::deadpool::PoolError),
 }
 
 impl From<argon2::password_hash::Error> for AuthenticationError {
@@ -50,11 +55,31 @@ impl From<argon2::password_hash::Error> for AuthenticationError {
 
 impl Database {
     pub fn new(config: Config) -> Self {
-        let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(config.database_url);
+        let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new_with_setup(
+            config.database_url,
+            |url| Box::pin(Self::establish(url)),
+        );
         let pool = Pool::builder(manager)
             .build()
             .expect("Failed to create pool.");
         Database { pool }
+    }
+
+    async fn establish(database_url: &str) -> ConnectionResult<AsyncPgConnection> {
+        let mut builder = SslConnector::builder(SslMethod::tls()).unwrap();
+        builder
+            .set_ca_file("./ca-certificates/eu-north-1-root.pem")
+            .unwrap();
+        let connector = MakeTlsConnector::new(builder.build());
+        let (client, connection) = tokio_postgres::connect(database_url, connector)
+            .await
+            .map_err(|e| ConnectionError::BadConnection(Box::new(e).to_string()))?;
+        tokio::spawn(async move {
+            if let Err(e) = connection.await {
+                eprintln!("connection error: {e}");
+            }
+        });
+        AsyncPgConnection::try_from(client).await
     }
 
     // pub async fn find_user_confirm_email_token(
@@ -227,11 +252,6 @@ impl Database {
         } else {
             None
         };
-        // let user_phone_clone = user_phone.clone();
-        // let mut user_phone_opt = None;
-        // if !user_phone.is_empty() {
-        //     user_phone_opt = Some(user_phone_clone).as_deref()
-        // }
 
         let check_if_user_exist = self
             .find_user_by_username_or_email_or_phone(&user_username, &user_email, user_phone_opt)
@@ -267,11 +287,7 @@ impl Database {
     pub async fn update_email_verification_things(
         &self,
         data: UpdateEmailAttributes,
-        // token: u32,
-        // confirmed: bool,
     ) -> Result<Option<ConfirmEmailResponse>, AuthenticationError> {
-        // data.confirm_email_token = if token == 0 { None } else { Some(token as i32) };
-        // data.confirmed_email = Some(confirmed);
         let mut conn = self.get_db_conn().await?;
         match diesel::update(users.filter(email.eq(&data.email)))
             .set(&data)

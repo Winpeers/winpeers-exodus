@@ -10,7 +10,6 @@ actix-governor = "0.4.0"
 actix-web = "4.3.1"
 argon2 = "0.5.0"
 base64 = "0.21.2"
-cargo-watch = "8.4.0"
 chrono = { version = "0.4.24", features = ["serde"] }
 deadpool = "0.9.5"
 deadpool-redis = { version = "0.12.0", features = ["serde"] }
@@ -25,14 +24,15 @@ log = "0.4.18"
 log4rs = "1.2.0"
 mobc = "0.8.1"
 mobc-redis = "0.8.0"
+openssl = { version = "0.10.55", features = ["vendored"] }
+postgres-openssl = "0.5.0"
 rand = "0.8.5"
 rand_core = { version = "0.6.4", features = ["std"] }
-redis = { version = "0.23.0", features = ["tokio-comp"] }
+redis = { version = "0.23.0", features = ["tokio-comp", "serde"] }
 regex = "1.8.4"
 reqwest = { version = "0.11.18", features = ["json"] }
 rusoto_core = "0.48.0"
 rusoto_ses = "0.48.0"
-rustls = "0.21.2"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
 thiserror = "1.0.40"
