@@ -45,87 +45,13 @@ impl KeyExtractor for RealIpKeyExtractor {
                         })
                 }),
             // The request is not coming from the reverse proxy, we use peer IP
-            _ => connection_info
+            _ => req
                 .peer_addr()
                 .ok_or_else(|| {
                     SimpleKeyExtractionError::new("Could not extract peer IP address from request")
                 })
-                .and_then(|str| {
-                    SocketAddr::from_str(str).map_err(|_| {
-                        SimpleKeyExtractionError::new(
-                            "Could not extract peer IP address from request",
-                        )
-                    })
-                })
                 .map(|socket| socket.ip()),
         }
-        // let data = req.app_data::<web::Data<AppState>>().unwrap();
-        //
-        // let access_token = if let Some(cookie) = req.cookie("access_token") {
-        //     Some(cookie.value().to_string())
-        // } else {
-        //     req.headers()
-        //         .get(http::header::AUTHORIZATION)
-        //         .and_then(|header| header.to_str().ok())
-        //         .filter(|header| !header.is_empty())
-        //         .and_then(|header| {
-        //             if header.starts_with("Bearer ") {
-        //                 Some(header[7..].to_string())
-        //             } else {
-        //                 None
-        //             }
-        //         })
-        // };
-        //
-        // let access_t = match access_token {
-        //     Some(token) => Ok(token),
-        //     None => Err(AuthError(ErrorResponse {
-        //         status: "failed".to_string(),
-        //         message: "The token has expired (rlm)".to_string(),
-        //     })),
-        // };
-        //
-        // let access_token_details = match verify_jwt_token(
-        //     data.config.access_token_public_key.to_string(),
-        //     &access_t.unwrap(),
-        // ) {
-        //     Ok(token_details) => token_details,
-        //     Err(_) => {
-        //         return Err(AuthError(ErrorResponse {
-        //             status: "failed".to_string(),
-        //             message: "The token has expired (rlm)".to_string(),
-        //         }))
-        //     }
-        // };
-        //
-        // let user_email_redis_result = async move {
-        //     let redis_result = data
-        //         .redis_db
-        //         .get_str(&access_token_details.token_uuid.to_string())
-        //         .await;
-        //
-        //     match redis_result {
-        //         Ok(val) => Ok(val),
-        //         Err(e) => {
-        //             error!("The error: {:?}", e);
-        //             Err(AuthError(ErrorResponse {
-        //                 status: "failed".to_string(),
-        //                 message: "The token has expired (rlm)".to_string(),
-        //             }))
-        //         }
-        //     }
-        // };
-        //
-        // match block_on(user_email_redis_result) {
-        //     Ok(user_email) => Ok(user_email),
-        //     Err(e) => {
-        //         error!("The error: {:?}", e);
-        //         Err(AuthError(ErrorResponse {
-        //             status: "failed".to_string(),
-        //             message: "The token has expired (rlm)".to_string(),
-        //         }))
-        //     }
-        // }
     }
 
     #[cfg(feature = "log")]

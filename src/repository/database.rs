@@ -73,7 +73,7 @@ impl Database {
         let connector = MakeTlsConnector::new(builder.build());
         let (client, connection) = tokio_postgres::connect(database_url, connector)
             .await
-            .map_err(|e| ConnectionError::BadConnection(Box::new(e).to_string()))?;
+            .map_err(|e| ConnectionError::BadConnection(e.to_string()))?;
         tokio::spawn(async move {
             if let Err(e) = connection.await {
                 eprintln!("connection error: {e}");
